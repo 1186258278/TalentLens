@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TalentLens - AI 智能简历筛选工具</title>
+  <meta name="description" content="TalentLens 是一款 AI 驱动的智能简历筛选桌面工具，帮助 HR 高效筛选简历、评分排名、生成分析报告。支持 Windows / macOS / Linux。">
+  <meta name="keywords" content="TalentLens, AI, 简历筛选, HR工具, 招聘, 简历分析, DeepSeek, OpenAI">
+  <meta property="og:title" content="TalentLens - AI 智能简历筛选工具">
+  <meta property="og:description" content="拖入简历，AI 自动分析评分排名。支持 Windows / macOS / Linux。">
+  <meta property="og:url" content="https://talentlens.qt.cool">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <style>
+    :root {
+      --blue: #007AFF;
+      --blue-dark: #0056CC;
+      --blue-light: rgba(0, 122, 255, 0.08);
+      --green: #34C759;
+      --orange: #FF9500;
+      --red: #FF3B30;
+      --bg: #FFFFFF;
+      --bg-alt: #F5F5F7;
+      --bg-dark: #1D1D1F;
+      --text: #1D1D1F;
+      --text-secondary: #86868B;
+      --border: rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+      --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); color: var(--text); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: var(--blue); text-decoration: none; transition: opacity 0.2s; }
+    a:hover { opacity: 0.8; }
+
+    /* ====== Nav ====== */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+    }
+    .nav-inner {
+      max-width: 1080px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; height: 100%;
+    }
+    .nav-brand { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+    .nav-brand span { color: var(--blue); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--blue); color: white !important; padding: 7px 18px;
+      border-radius: 20px; font-size: 13px; font-weight: 600;
+    }
+    .nav-cta:hover { background: var(--blue-dark); opacity: 1; }
+
+    /* ====== Hero ====== */
+    .hero {
+      padding: 140px 24px 80px; text-align: center;
+      background: linear-gradient(180deg, #F5F5F7 0%, #FFFFFF 100%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 20px;
+      background: var(--blue-light); color: var(--blue);
+      font-size: 13px; font-weight: 600; margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 56px); font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px;
+    }
+    .hero h1 em { font-style: normal; color: var(--blue); }
+    .hero p {
+      font-size: 18px; color: var(--text-secondary);
+      max-width: 560px; margin: 0 auto 36px; line-height: 1.7;
+    }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 12px;
+      font-size: 16px; font-weight: 600; transition: all 0.2s;
+      border: none; cursor: pointer; text-decoration: none;
+    }
+    .btn-primary { background: var(--blue); color: white; box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3); }
+    .btn-primary:hover { background: var(--blue-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 122, 255, 0.35); opacity: 1; }
+    .btn-secondary { background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #EDEDF0; opacity: 1; }
+    .hero-platforms {
+      margin-top: 32px; display: flex; gap: 20px; justify-content: center;
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .hero-platforms span { display: flex; align-items: center; gap: 4px; }
+
+    /* ====== Features ====== */
+    .features { padding: 100px 24px; background: var(--bg); }
+    .section-title { text-align: center; margin-bottom: 60px; }
+    .section-title h2 { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .section-title p { font-size: 16px; color: var(--text-secondary); }
+    .features-grid {
+      max-width: 1080px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;
+    }
+    .feature-card {
+      padding: 32px; border-radius: var(--radius);
+      background: var(--bg-alt); border: 1px solid transparent;
+      transition: all 0.3s;
+    }
+    .feature-card:hover { border-color: var(--blue); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06); }
+    .feature-icon { font-size: 36px; margin-bottom: 16px; }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* ====== Workflow ====== */
+    .workflow { padding: 100px 24px; background: var(--bg-alt); }
+    .workflow-steps {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px;
+    }
+    .step {
+      text-align: center; padding: 28px 16px;
+      background: var(--bg); border-radius: var(--radius);
+      position: relative;
+    }
+    .step-num {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--blue); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700;
+      margin: 0 auto 14px;
+    }
+    .step h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--text-secondary); }
+
+    /* ====== Providers ====== */
+    .providers { padding: 100px 24px; background: var(--bg); }
+    .provider-grid {
+      max-width: 800px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+    }
+    .provider-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 20px 24px; border-radius: 12px;
+      background: var(--bg-alt); border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .provider-card:hover { border-color: var(--border); }
+    .provider-logo { font-size: 28px; }
+    .provider-info h4 { font-size: 15px; font-weight: 600; }
+    .provider-info p { font-size: 12px; color: var(--text-secondary); }
+    .provider-badge {
+      margin-left: auto; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(52, 199, 89, 0.1); color: var(--green);
+    }
+
+    /* ====== Download ====== */
+    .download { padding: 100px 24px; background: var(--bg-alt); }
+    .download-grid {
+      max-width: 800px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+    }
+    .download-card {
+      text-align: center; padding: 36px 24px; border-radius: var(--radius);
+      background: var(--bg); border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .download-card:hover { border-color: var(--blue); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); }
+    .download-card .os-icon { font-size: 40px; margin-bottom: 12px; }
+    .download-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .download-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+    .download-btn {
+      display: inline-block; padding: 8px 24px; border-radius: 8px;
+      background: var(--blue); color: white; font-size: 13px; font-weight: 600;
+    }
+
+    /* ====== Tech ====== */
+    .tech { padding: 80px 24px; background: var(--bg); }
+    .tech-grid {
+      max-width: 700px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;
+    }
+    .tech-item {
+      text-align: center; padding: 20px; border-radius: 12px;
+      background: var(--bg-alt);
+    }
+    .tech-item .tech-icon { font-size: 28px; margin-bottom: 8px; }
+    .tech-item h4 { font-size: 13px; font-weight: 600; }
+    .tech-item p { font-size: 11px; color: var(--text-secondary); }
+
+    /* ====== CTA ====== */
+    .cta {
+      padding: 100px 24px; text-align: center;
+      background: linear-gradient(135deg, #1D1D1F 0%, #2D2D30 100%);
+      color: white;
+    }
+    .cta h2 { font-size: 36px; font-weight: 800; margin-bottom: 16px; }
+    .cta p { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 36px; }
+    .cta .btn-primary { box-shadow: 0 4px 20px rgba(0, 122, 255, 0.4); }
+
+    /* ====== Footer ====== */
+    .footer {
+      padding: 40px 24px; text-align: center;
+      border-top: 1px solid var(--border);
+      background: var(--bg-alt);
+    }
+    .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .footer-links a { font-size: 13px; color: var(--text-secondary); }
+    .footer p { font-size: 12px; color: var(--text-secondary); }
+    .footer .icp { margin-top: 8px; font-size: 11px; color: #AEAEB2; }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 32px; }
+      .hero p { font-size: 16px; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .features-grid, .workflow-steps, .download-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand"><span>Talent</span>Lens</div>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#workflow">流程</a>
+      <a href="#providers">服务商</a>
+      <a href="#download">下载</a>
+      <a href="https://github.com/1186258278/TalentLens" target="_blank">GitHub</a>
+      <a href="https://github.com/1186258278/TalentLens/releases" class="nav-cta" target="_blank">立即下载</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">🔍 AI 驱动 · 开源免费 · 多平台</div>
+  <h1>让简历筛选<br><em>快人一步</em></h1>
+  <p>TalentLens 是一款 AI 驱动的智能简历筛选桌面工具。拖入简历，自动分析评分排名，帮助 HR 从海量候选人中精准锁定最佳人选。</p>
+  <div class="hero-actions">
+    <a href="https://github.com/1186258278/TalentLens/releases" class="btn btn-primary" target="_blank">
+      ⬇ 下载最新版
+    </a>
+    <a href="https://github.com/1186258278/TalentLens" class="btn btn-secondary" target="_blank">
+      📦 查看源码
+    </a>
+  </div>
+  <div class="hero-platforms">
+    <span>🪟 Windows</span>
+    <span>🍎 macOS</span>
+    <span>🐧 Linux</span>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="features">
+  <div class="section-title">
+    <h2>核心功能</h2>
+    <p>为 HR 量身打造的 AI 简历筛选体验</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📂</div>
+      <h3>招聘项目管理</h3>
+      <p>按岗位创建招聘项目，每个项目独立管理简历和岗位要求，支持批量导入和导出。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>AI 深度分析</h3>
+      <p>基于 OpenAI 兼容接口，从技能、经验、学历三大维度全方位评估，给出专业推荐结论。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>排名对比</h3>
+      <p>分析完成后自动排名，Top 3 金银铜标识一目了然，支持导出 Excel 对比报告。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>精准评分</h3>
+      <p>加权评分公式：技能 45% + 经验 35% + 学历 20%，基于客观事实，减少主观偏差。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌍</div>
+      <h3>国际化</h3>
+      <p>支持简体中文、繁体中文、English 三语切换，满足跨国团队需求。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎨</div>
+      <h3>macOS 风格 UI</h3>
+      <p>毛玻璃标题栏、交通灯窗口按钮、精致排版，追求极致的视觉体验。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Workflow -->
+<section id="workflow" class="workflow">
+  <div class="section-title">
+    <h2>简单 5 步完成筛选</h2>
+    <p>从零到出结果，只需几分钟</p>
+  </div>
+  <div class="workflow-steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>创建项目</h4>
+      <p>填写岗位名称<br>配置要求</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>导入简历</h4>
+      <p>拖拽 PDF/Word<br>支持图片格式</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>AI 分析</h4>
+      <p>一键开始<br>实时显示进度</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>查看排名</h4>
+      <p>自动排序<br>多维度对比</p>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <h4>导出报告</h4>
+      <p>Excel 报告<br>分享给团队</p>
+    </div>
+  </div>
+</section>
+
+<!-- Providers -->
+<section id="providers" class="providers">
+  <div class="section-title">
+    <h2>支持多家 AI 服务商</h2>
+    <p>选择你喜欢的模型，灵活配置</p>
+  </div>
+  <div class="provider-grid">
+    <div class="provider-card">
+      <div class="provider-logo">🔮</div>
+      <div class="provider-info"><h4>DeepSeek</h4><p>DeepSeek-V3.2</p></div>
+      <span class="provider-badge">推荐</span>
+    </div>
+    <div class="provider-card">
+      <div class="provider-logo">🧠</div>
+      <div class="provider-info"><h4>OpenAI</h4><p>GPT-5 / GPT-5 Mini</p></div>
+    </div>
+    <div class="provider-card">
+      <div class="provider-logo">🔵</div>
+      <div class="provider-info"><h4>智谱 AI</h4><p>GLM-4.7-Flash (免费)</p></div>
+    </div>
+    <div class="provider-card">
+      <div class="provider-logo">🌙</div>
+      <div class="provider-info"><h4>Moonshot (Kimi)</h4><p>Kimi K2.5</p></div>
+    </div>
+    <div class="provider-card">
+      <div class="provider-logo">⚡</div>
+      <div class="provider-info"><h4>硅基流动</h4><p>100+ 模型一站调用</p></div>
+    </div>
+    <div class="provider-card">
+      <div class="provider-logo">🔧</div>
+      <div class="provider-info"><h4>自定义</h4><p>任何 OpenAI 兼容接口</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Download -->
+<section id="download" class="download">
+  <div class="section-title">
+    <h2>立即下载</h2>
+    <p>选择你的平台，免费使用</p>
+  </div>
+  <div class="download-grid">
+    <div class="download-card">
+      <div class="os-icon">🪟</div>
+      <h4>Windows</h4>
+      <p>Windows 10/11<br>x64 / ARM64</p>
+      <a href="https://github.com/1186258278/TalentLens/releases" class="download-btn" target="_blank">下载 .exe</a>
+    </div>
+    <div class="download-card">
+      <div class="os-icon">🍎</div>
+      <h4>macOS</h4>
+      <p>Intel / Apple Silicon<br>macOS 11+</p>
+      <a href="https://github.com/1186258278/TalentLens/releases" class="download-btn" target="_blank">下载 .zip</a>
+    </div>
+    <div class="download-card">
+      <div class="os-icon">🐧</div>
+      <h4>Linux</h4>
+      <p>Ubuntu / Debian<br>x64 / ARM64</p>
+      <a href="https://github.com/1186258278/TalentLens/releases" class="download-btn" target="_blank">下载 .tar.gz</a>
+    </div>
+  </div>
+</section>
+
+<!-- Tech -->
+<section class="tech">
+  <div class="section-title">
+    <h2>技术栈</h2>
+    <p>现代技术，全栈开源</p>
+  </div>
+  <div class="tech-grid">
+    <div class="tech-item"><div class="tech-icon">🐹</div><h4>Go 1.24</h4><p>后端</p></div>
+    <div class="tech-item"><div class="tech-icon">⚡</div><h4>Wails v2</h4><p>桌面框架</p></div>
+    <div class="tech-item"><div class="tech-icon">💚</div><h4>Vue 3</h4><p>前端框架</p></div>
+    <div class="tech-item"><div class="tech-icon">📘</div><h4>TypeScript</h4><p>类型安全</p></div>
+    <div class="tech-item"><div class="tech-icon">🎨</div><h4>Element Plus</h4><p>UI 组件</p></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2>开始你的 AI 招聘之旅</h2>
+  <p>免费、开源、跨平台 — 让每一次筛选都更高效</p>
+  <a href="https://github.com/1186258278/TalentLens/releases" class="btn btn-primary" target="_blank">
+    ⬇ 免费下载 TalentLens
+  </a>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="https://github.com/1186258278/TalentLens" target="_blank">GitHub</a>
+    <a href="https://github.com/1186258278/TalentLens/releases" target="_blank">版本下载</a>
+    <a href="https://github.com/1186258278/TalentLens/issues" target="_blank">问题反馈</a>
+    <a href="https://qingchencloud.com" target="_blank">晴辰云官网</a>
+    <a href="https://qt.cool" target="_blank">产品导航</a>
+  </div>
+  <p><strong>武汉晴辰天下网络科技有限公司</strong> 出品 · GPL-3.0 License</p>
+  <p class="icp">鄂ICP备2025164966号</p>
+</footer>
+
+</body>
+</html>
