@@ -121,8 +121,53 @@ export namespace main {
 		}
 	}
 	
+	export class Project {
+	    id: string;
+	    name: string;
+	    job_config: JobConfig;
+	    resume_ids: string[];
+	    status: string;
+	    // Go type: time
+	    created_at: any;
+	    // Go type: time
+	    updated_at: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new Project(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.job_config = this.convertValues(source["job_config"], JobConfig);
+	        this.resume_ids = source["resume_ids"];
+	        this.status = source["status"];
+	        this.created_at = this.convertValues(source["created_at"], null);
+	        this.updated_at = this.convertValues(source["updated_at"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class Resume {
 	    id: string;
+	    project_id: string;
 	    file_name: string;
 	    file_path: string;
 	    file_type: string;
@@ -141,6 +186,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.project_id = source["project_id"];
 	        this.file_name = source["file_name"];
 	        this.file_path = source["file_path"];
 	        this.file_type = source["file_type"];

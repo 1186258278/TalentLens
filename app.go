@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xuri/excelize/v2"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -49,9 +50,21 @@ type JobConfig struct {
 	EducationLevel  string   `json:"education_level"`
 }
 
+// Project 招聘项目
+type Project struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	JobConfig JobConfig `json:"job_config"`
+	ResumeIDs []string  `json:"resume_ids"`
+	Status    string    `json:"status"` // draft/analyzing/completed
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Resume 简历结构
 type Resume struct {
 	ID        string          `json:"id"`
+	ProjectID string          `json:"project_id"`
 	FileName  string          `json:"file_name"`
 	FilePath  string          `json:"file_path"`
 	FileType  string          `json:"file_type"`
@@ -414,6 +427,367 @@ func (a *App) GetResumeText(id string) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+// ============================================
+// 招聘项目管理
+// ============================================
+
+func (a *App) getProjectsDir() string {
+	dir := filepath.Join(a.getDataDir(), "projects")
+	os.MkdirAll(dir, 0755)
+	return dir
+}
+
+func (a *App) saveProject(p *Project) {
+	data, _ := json.MarshalIndent(p, "", "  ")
+	os.WriteFile(filepath.Join(a.getProjectsDir(), p.ID+".json"), data, 0644)
+}
+
+// CreateProject 创建招聘项目
+func (a *App) CreateProject(name string, jobCfg *JobConfig) *Project {
+	p := &Project{
+		ID:        fmt.Sprintf("proj_%d", time.Now().UnixNano()),
+		Name:      name,
+		JobConfig: *jobCfg,
+		ResumeIDs: []string{},
+		Status:    "draft",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	a.saveProject(p)
+	log.Printf("[CreateProject] 创建项目: %s (%s)", p.Name, p.ID)
+	return p
+}
+
+// GetProjects 获取所有项目列表
+func (a *App) GetProjects() []*Project {
+	dir := a.getProjectsDir()
+	entries, _ := os.ReadDir(dir)
+	var projects []*Project
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			continue
+		}
+		var p Project
+		if json.Unmarshal(data, &p) == nil {
+			projects = append(projects, &p)
+		}
+	}
+	// 按更新时间倒序
+	for i := 0; i < len(projects); i++ {
+		for j := i + 1; j < len(projects); j++ {
+			if projects[j].UpdatedAt.After(projects[i].UpdatedAt) {
+				projects[i], projects[j] = projects[j], projects[i]
+			}
+		}
+	}
+	return projects
+}
+
+// GetProject 获取单个项目
+func (a *App) GetProject(id string) *Project {
+	data, err := os.ReadFile(filepath.Join(a.getProjectsDir(), id+".json"))
+	if err != nil {
+		return nil
+	}
+	var p Project
+	json.Unmarshal(data, &p)
+	return &p
+}
+
+// UpdateProject 更新项目
+func (a *App) UpdateProject(p *Project) error {
+	p.UpdatedAt = time.Now()
+	a.saveProject(p)
+	return nil
+}
+
+// DeleteProject 删除项目及其关联简历
+func (a *App) DeleteProject(id string) error {
+	p := a.GetProject(id)
+	if p != nil {
+		// 删除关联简历
+		for _, rid := range p.ResumeIDs {
+			a.DeleteResume(rid)
+		}
+	}
+	return os.Remove(filepath.Join(a.getProjectsDir(), id+".json"))
+}
+
+// GetProjectResumes 获取项目下的所有简历
+func (a *App) GetProjectResumes(projectID string) []*Resume {
+	p := a.GetProject(projectID)
+	if p == nil {
+		return nil
+	}
+	var resumes []*Resume
+	for _, rid := range p.ResumeIDs {
+		path := filepath.Join(a.getDataDir(), "resumes", rid+".json")
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		var r Resume
+		if json.Unmarshal(data, &r) == nil {
+			resumes = append(resumes, &r)
+		}
+	}
+	return resumes
+}
+
+// GetProjectRanking 获取项目排名（按分数降序）
+func (a *App) GetProjectRanking(projectID string) []*Resume {
+	resumes := a.GetProjectResumes(projectID)
+	// 按分数降序排列
+	for i := 0; i < len(resumes); i++ {
+		for j := i + 1; j < len(resumes); j++ {
+			if resumes[j].Score > resumes[i].Score {
+				resumes[i], resumes[j] = resumes[j], resumes[i]
+			}
+		}
+	}
+	return resumes
+}
+
+// RegisterResumeToProject 注册简历到项目
+func (a *App) RegisterResumeToProject(projectID string, id string, fileName string, filePath string, fileType string, fileSize int64) (bool, string) {
+	log.Printf("[RegisterResumeToProject] proj=%s, file=%s", projectID, fileName)
+
+	content := ""
+	if filePath != "" && filePath != fileName {
+		content = a.extractText(filePath)
+	}
+	if content == "" {
+		content = fmt.Sprintf("[简历文件: %s, 类型: %s, 大小: %d bytes]", fileName, fileType, fileSize)
+	}
+
+	resume := &Resume{
+		ID:        id,
+		ProjectID: projectID,
+		FileName:  fileName,
+		FilePath:  filePath,
+		FileType:  fileType,
+		FileSize:  fileSize,
+		Content:   content,
+		Status:    "pending",
+		CreatedAt: time.Now(),
+	}
+	a.saveResume(resume)
+
+	// 更新项目的简历列表
+	p := a.GetProject(projectID)
+	if p != nil {
+		p.ResumeIDs = append(p.ResumeIDs, id)
+		a.UpdateProject(p)
+	}
+
+	return true, "简历已注册: " + fileName
+}
+
+// ImportResumesToProject 批量导入简历文件到项目
+func (a *App) ImportResumesToProject(projectID string, filePaths []string) (int, error) {
+	count := 0
+	supportedExts := map[string]bool{
+		".pdf": true, ".docx": true, ".doc": true,
+		".jpg": true, ".jpeg": true, ".png": true, ".bmp": true, ".gif": true, ".webp": true,
+	}
+
+	for _, fp := range filePaths {
+		ext := strings.ToLower(filepath.Ext(fp))
+		if !supportedExts[ext] {
+			continue
+		}
+		info, err := os.Stat(fp)
+		if err != nil {
+			continue
+		}
+		id := fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(fp))
+		a.RegisterResumeToProject(projectID, id, filepath.Base(fp), fp, ext, info.Size())
+		count++
+	}
+	return count, nil
+}
+
+// StartProjectAnalysis 对项目中所有待分析的简历进行批量分析
+func (a *App) StartProjectAnalysis(projectID string, cfg *AIConfig) {
+	p := a.GetProject(projectID)
+	if p == nil {
+		return
+	}
+
+	go func() {
+		p.Status = "analyzing"
+		a.saveProject(p)
+
+		resumes := a.GetProjectResumes(projectID)
+		var pendingIDs []string
+		for _, r := range resumes {
+			if r.Status == "pending" || r.Status == "error" {
+				pendingIDs = append(pendingIDs, r.ID)
+			}
+		}
+
+		total := len(pendingIDs)
+		for i, id := range pendingIDs {
+			runtime.EventsEmit(a.ctx, "batch:progress", map[string]interface{}{
+				"current":   i + 1,
+				"total":     total,
+				"resumeId":  id,
+				"projectId": projectID,
+			})
+
+			_, err := a.AnalyzeResume(id, cfg, &p.JobConfig)
+			if err != nil {
+				log.Printf("分析简历 %s 失败: %v", id, err)
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		p.Status = "completed"
+		a.saveProject(p)
+
+		runtime.EventsEmit(a.ctx, "batch:completed", map[string]interface{}{
+			"total":     total,
+			"projectId": projectID,
+		})
+	}()
+}
+
+// MigrateExistingResumes 将现有简历迁移到默认项目
+func (a *App) MigrateExistingResumes() string {
+	resumes := a.GetResumes()
+	if len(resumes) == 0 {
+		return ""
+	}
+
+	// 检查是否已有项目
+	projects := a.GetProjects()
+	if len(projects) > 0 {
+		return projects[0].ID
+	}
+
+	// 创建默认项目
+	jobCfg := &a.config.Job
+	p := a.CreateProject("默认项目", jobCfg)
+
+	for _, r := range resumes {
+		r.ProjectID = p.ID
+		a.saveResume(r)
+		p.ResumeIDs = append(p.ResumeIDs, r.ID)
+	}
+	a.saveProject(p)
+	log.Printf("[MigrateExistingResumes] 迁移 %d 份简历到默认项目", len(resumes))
+	return p.ID
+}
+
+// ExportProjectReport 导出项目分析报告为 Excel
+func (a *App) ExportProjectReport(projectID string) (string, error) {
+	p := a.GetProject(projectID)
+	if p == nil {
+		return "", fmt.Errorf("项目不存在")
+	}
+
+	resumes := a.GetProjectRanking(projectID)
+	if len(resumes) == 0 {
+		return "", fmt.Errorf("项目中没有简历")
+	}
+
+	f := excelize.NewFile()
+	sheet := "候选人排名"
+	f.SetSheetName("Sheet1", sheet)
+
+	// 表头
+	headers := []string{"排名", "姓名", "文件名", "综合分", "技能匹配", "经验匹配", "学历匹配", "推荐等级", "优势", "不足", "风险", "总结"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// 表头样式
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font:      &excelize.Font{Bold: true, Size: 11, Color: "FFFFFF"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"007AFF"}, Pattern: 1},
+		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
+	})
+	f.SetRowStyle(sheet, 1, 1, headerStyle)
+
+	// 数据行
+	recMap := map[string]string{
+		"strong_recommend": "强烈推荐",
+		"recommend":        "推荐",
+		"consider":         "可考虑",
+		"not_recommend":    "不推荐",
+	}
+
+	for i, r := range resumes {
+		row := i + 2
+		name := r.FileName
+		strengths := ""
+		weaknesses := ""
+		risks := ""
+		summary := ""
+		rec := ""
+
+		if r.Analysis != nil {
+			if r.Analysis.CandidateName != "" {
+				name = r.Analysis.CandidateName
+			}
+			strengths = strings.Join(r.Analysis.Strengths, "\n")
+			weaknesses = strings.Join(r.Analysis.Weaknesses, "\n")
+			risks = strings.Join(r.Analysis.Risks, "\n")
+			summary = r.Analysis.Summary
+			if v, ok := recMap[r.Analysis.Recommendation]; ok {
+				rec = v
+			} else {
+				rec = r.Analysis.Recommendation
+			}
+		}
+
+		rowData := []interface{}{
+			i + 1, name, r.FileName, r.Score,
+			0, 0, 0, rec, strengths, weaknesses, risks, summary,
+		}
+		if r.Analysis != nil {
+			rowData[4] = r.Analysis.SkillMatch
+			rowData[5] = r.Analysis.ExperienceMatch
+			rowData[6] = r.Analysis.EducationMatch
+		}
+
+		for j, val := range rowData {
+			cell, _ := excelize.CoordinatesToCellName(j+1, row)
+			f.SetCellValue(sheet, cell, val)
+		}
+	}
+
+	// 设置列宽
+	colWidths := map[string]float64{"A": 6, "B": 12, "C": 25, "D": 8, "E": 10, "F": 10, "G": 10, "H": 10, "I": 30, "J": 30, "K": 25, "L": 40}
+	for col, w := range colWidths {
+		f.SetColWidth(sheet, col, col, w)
+	}
+
+	// 保存
+	outDir := filepath.Join(a.getDataDir(), "exports")
+	os.MkdirAll(outDir, 0755)
+	fileName := fmt.Sprintf("%s_排名报告_%s.xlsx", p.Name, time.Now().Format("20060102_150405"))
+	outPath := filepath.Join(outDir, fileName)
+	if err := f.SaveAs(outPath); err != nil {
+		return "", fmt.Errorf("保存失败: %v", err)
+	}
+
+	log.Printf("[ExportProjectReport] 导出成功: %s", outPath)
+	return outPath, nil
+}
+
+// OpenExportDir 打开导出目录
+func (a *App) OpenExportDir() {
+	dir := filepath.Join(a.getDataDir(), "exports")
+	os.MkdirAll(dir, 0755)
+	runtime.BrowserOpenURL(a.ctx, dir)
 }
 
 // TestAIConnection 测试AI连接

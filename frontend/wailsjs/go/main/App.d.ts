@@ -6,23 +6,49 @@ export function AnalyzeResume(arg1:string,arg2:main.AIConfig,arg3:main.JobConfig
 
 export function ClearResumes():Promise<void>;
 
+export function CreateProject(arg1:string,arg2:main.JobConfig):Promise<main.Project>;
+
+export function DeleteProject(arg1:string):Promise<void>;
+
 export function DeleteResume(arg1:string):Promise<void>;
 
+export function ExportProjectReport(arg1:string):Promise<string>;
+
 export function GetConfig():Promise<main.Config>;
+
+export function GetProject(arg1:string):Promise<main.Project>;
+
+export function GetProjectRanking(arg1:string):Promise<Array<main.Resume>>;
+
+export function GetProjectResumes(arg1:string):Promise<Array<main.Resume>>;
+
+export function GetProjects():Promise<Array<main.Project>>;
 
 export function GetResumeText(arg1:string):Promise<string>;
 
 export function GetResumes():Promise<Array<main.Resume>>;
 
+export function ImportResumesToProject(arg1:string,arg2:Array<string>):Promise<number>;
+
+export function MigrateExistingResumes():Promise<string>;
+
+export function OpenExportDir():Promise<void>;
+
 export function ReAnalyzeResume(arg1:string):Promise<void>;
 
 export function RegisterResume(arg1:string,arg2:string,arg3:string,arg4:string,arg5:number):Promise<boolean|string>;
+
+export function RegisterResumeToProject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:number):Promise<boolean|string>;
 
 export function SaveConfig(arg1:main.Config):Promise<void>;
 
 export function StartBatchAnalysis(arg1:Array<string>,arg2:main.AIConfig,arg3:main.JobConfig):Promise<void>;
 
+export function StartProjectAnalysis(arg1:string,arg2:main.AIConfig):Promise<void>;
+
 export function TestAIConnection(arg1:main.AIConfig):Promise<boolean|string>;
+
+export function UpdateProject(arg1:main.Project):Promise<void>;
 
 export function WindowClose():Promise<void>;
 

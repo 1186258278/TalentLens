@@ -237,5 +237,32 @@ export default {
     noResumesToAnalyze: '没有待分析的简历',
     configSuccess: 'AI 配置成功，可以开始分析了',
     analysisStarted: '开始分析简历...'
+  },
+
+  project: {
+    title: '招聘项目',
+    create: '新建项目',
+    createFirst: '创建第一个招聘项目',
+    createDialogTitle: '新建招聘项目',
+    createSuccess: '项目创建成功',
+    deleteConfirm: '确定删除此项目？项目下的所有简历也将被删除。',
+    deleteSuccess: '项目已删除',
+    projectName: '项目名称',
+    projectNamePlaceholder: '如：Go高级开发 - 2月批次',
+    empty: '还没有招聘项目，创建一个开始吧',
+    statusDraft: '准备中',
+    statusAnalyzing: '分析中',
+    statusCompleted: '已完成',
+    ranking: '排名对比',
+    exportExcel: '导出 Excel',
+    exportSuccess: '报告已导出',
+    exportFailed: '导出失败',
+    openExportDir: '打开导出目录',
+    stats: '项目统计',
+    totalResumes: '总简历数',
+    analyzedCount: '已分析',
+    avgScore: '平均分',
+    recommendCount: '推荐人数',
+    backToList: '返回项目列表'
   }
 }

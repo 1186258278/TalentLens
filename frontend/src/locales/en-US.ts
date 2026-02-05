@@ -237,5 +237,32 @@ export default {
     noResumesToAnalyze: 'No resumes to analyze',
     configSuccess: 'AI configured successfully, ready to analyze',
     analysisStarted: 'Starting resume analysis...'
+  },
+
+  project: {
+    title: 'Recruitment Projects',
+    create: 'New Project',
+    createFirst: 'Create your first recruitment project',
+    createDialogTitle: 'New Recruitment Project',
+    createSuccess: 'Project created',
+    deleteConfirm: 'Delete this project? All resumes in the project will also be deleted.',
+    deleteSuccess: 'Project deleted',
+    projectName: 'Project Name',
+    projectNamePlaceholder: 'e.g. Senior Go Dev - Feb Batch',
+    empty: 'No recruitment projects yet. Create one to get started.',
+    statusDraft: 'Draft',
+    statusAnalyzing: 'Analyzing',
+    statusCompleted: 'Completed',
+    ranking: 'Ranking',
+    exportExcel: 'Export Excel',
+    exportSuccess: 'Report exported',
+    exportFailed: 'Export failed',
+    openExportDir: 'Open export folder',
+    stats: 'Statistics',
+    totalResumes: 'Total Resumes',
+    analyzedCount: 'Analyzed',
+    avgScore: 'Avg Score',
+    recommendCount: 'Recommended',
+    backToList: 'Back to Projects'
   }
 }

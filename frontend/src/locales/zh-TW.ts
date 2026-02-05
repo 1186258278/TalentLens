@@ -237,5 +237,32 @@ export default {
     noResumesToAnalyze: '沒有待分析的履歷',
     configSuccess: 'AI 設定成功，可以開始分析了',
     analysisStarted: '開始分析履歷...'
+  },
+
+  project: {
+    title: '招聘專案',
+    create: '新建專案',
+    createFirst: '建立第一個招聘專案',
+    createDialogTitle: '新建招聘專案',
+    createSuccess: '專案建立成功',
+    deleteConfirm: '確定刪除此專案？專案下的所有履歷也將被刪除。',
+    deleteSuccess: '專案已刪除',
+    projectName: '專案名稱',
+    projectNamePlaceholder: '如：Go高級開發 - 2月批次',
+    empty: '還沒有招聘專案，建立一個開始吧',
+    statusDraft: '準備中',
+    statusAnalyzing: '分析中',
+    statusCompleted: '已完成',
+    ranking: '排名對比',
+    exportExcel: '匯出 Excel',
+    exportSuccess: '報告已匯出',
+    exportFailed: '匯出失敗',
+    openExportDir: '開啟匯出目錄',
+    stats: '專案統計',
+    totalResumes: '總履歷數',
+    analyzedCount: '已分析',
+    avgScore: '平均分',
+    recommendCount: '推薦人數',
+    backToList: '返回專案列表'
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <!-- macOS 风格标题栏 -->
-    <TitleBar :title="$t('app.title')">
+    <TitleBar :title="projectName || $t('app.title')" :show-back="!!projectId">
       <div class="titlebar-actions">
         <span class="job-badge">
           <el-icon><Briefcase /></el-icon>
@@ -67,17 +67,31 @@
         </div>
       </aside>
 
-      <!-- 右侧预览面板 -->
+      <!-- 右侧面板 -->
       <section class="right-panel">
         <div class="preview-section">
+          <!-- 右侧 Tab 切换 -->
           <div class="section-bar">
-            <span class="section-label">
-              <el-icon><View /></el-icon>
-              {{ $t('home.preview') }}
-            </span>
+            <div class="tab-bar">
+              <button :class="['tab-btn', { active: rightTab === 'detail' }]" @click="rightTab = 'detail'">
+                <el-icon><View /></el-icon>
+                {{ $t('home.preview') }}
+              </button>
+              <button :class="['tab-btn', { active: rightTab === 'ranking' }]" @click="rightTab = 'ranking'">
+                <el-icon><Document /></el-icon>
+                {{ $t('project.ranking') }}
+              </button>
+            </div>
+            <div class="tab-actions" v-if="rightTab === 'ranking'">
+              <button class="action-btn" @click="handleExport">
+                <el-icon><Document /></el-icon>
+                {{ $t('project.exportExcel') }}
+              </button>
+            </div>
           </div>
 
-          <div class="preview-content">
+          <!-- 详情 Tab -->
+          <div v-show="rightTab === 'detail'" class="preview-content">
             <div v-if="resumeStore.selectedResume" class="resume-detail">
               <!-- 基本信息 -->
               <div class="detail-header">
@@ -203,6 +217,36 @@
 
             <el-empty v-else :description="$t('home.selectToPreview')" />
           </div>
+
+          <!-- 排名 Tab -->
+          <div v-show="rightTab === 'ranking'" class="ranking-content">
+            <div v-if="rankedResumes.length > 0" class="ranking-list">
+              <div v-for="(r, idx) in rankedResumes" :key="r.id" class="ranking-item" :class="{ 'top-3': idx < 3 }">
+                <div class="rank-num" :class="'rank-' + (idx < 3 ? idx + 1 : 'other')">{{ idx + 1 }}</div>
+                <div class="rank-info">
+                  <div class="rank-name">{{ r.analysis?.candidateName || r.fileName }}</div>
+                  <div class="rank-meta">
+                    <span v-if="r.analysis?.currentRole">{{ r.analysis.currentRole }}</span>
+                    <span v-if="r.analysis?.workYears">{{ r.analysis.workYears }}</span>
+                  </div>
+                </div>
+                <div class="rank-scores">
+                  <span class="rank-score-main" :class="getScoreClass(r.score)">{{ r.score }}</span>
+                  <div class="rank-score-detail">
+                    <span>技能 {{ r.analysis?.skillMatch || 0 }}</span>
+                    <span>经验 {{ r.analysis?.experienceMatch || 0 }}</span>
+                    <span>学历 {{ r.analysis?.educationMatch || 0 }}</span>
+                  </div>
+                </div>
+                <div class="rank-rec">
+                  <span class="rec-badge" :class="r.analysis?.recommendation">
+                    {{ $t(`analysis.recommendations.${r.analysis?.recommendation || 'consider'}`) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <el-empty v-else :description="'暂无已分析的简历'" />
+          </div>
         </div>
       </section>
     </main>
@@ -216,7 +260,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   Setting, Briefcase, Document, VideoPlay, Delete, View,
@@ -230,10 +274,18 @@ import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import AIConfigGuide from '../components/AIConfigGuide.vue'
 import DevPanel from '../components/DevPanel.vue'
 import { useResumeStore, type FileInfo } from '../composables/useResumeStore'
+import { useProjectStore } from '../composables/useProjectStore'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const resumeStore = useResumeStore()
+const projectStore = useProjectStore()
+
+// 项目上下文
+const projectId = computed(() => (route.params.id as string) || '')
+const projectName = computed(() => projectStore.currentProject?.name || '')
+const rightTab = ref<'detail' | 'ranking'>('detail')
 
 const jobTitle = ref('高级Go开发工程师')
 const showConfigGuide = ref(false)
@@ -287,6 +339,24 @@ const sortedResumes = computed(() => {
   })
 })
 
+// 排名列表（仅已完成分析的，按分数降序）
+const rankedResumes = computed(() => {
+  return resumeStore.resumes
+    .filter(r => r.status === 'done' && r.score)
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+})
+
+// 导出报告
+async function handleExport() {
+  if (!projectId.value) { ElMessage.warning('请先选择项目'); return }
+  const path = await projectStore.exportReport(projectId.value)
+  if (path) {
+    ElMessage.success(t('project.exportSuccess'))
+  } else {
+    ElMessage.error(t('project.exportFailed'))
+  }
+}
+
 function loadJobTitle() {
   const saved = localStorage.getItem('goresume_settings')
   if (saved) {
@@ -298,7 +368,7 @@ function loadJobTitle() {
 }
 
 function handleFilesAdded(files: FileInfo[]) {
-  resumeStore.addResumes(files)
+  resumeStore.addResumes(files, projectId.value)
 }
 
 function handleStartAnalysis() {
@@ -340,6 +410,17 @@ function getProgressColor(value: number): string {
 onMounted(async () => {
   loadJobTitle()
   await resumeStore.initWailsEvents()
+  
+  // 如果有项目上下文，加载项目信息和岗位
+  if (projectId.value) {
+    projectStore.currentProjectId = projectId.value
+    await projectStore.refreshProject(projectId.value)
+    if (projectStore.currentProject) {
+      jobTitle.value = projectStore.currentProject.job_config?.title || jobTitle.value
+    }
+    // 加载项目下的简历
+    await resumeStore.loadProjectResumes(projectId.value)
+  }
 })
 </script>
 
@@ -779,6 +860,124 @@ onMounted(async () => {
 
 :deep(.el-progress-bar__inner) {
   transition: width 0.5s ease-out !important;
+}
+
+// Tab 栏
+.tab-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $text-secondary;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: $font-family;
+  transition: all $transition-fast;
+
+  .el-icon { font-size: 13px; }
+
+  &:hover { background: $bg-hover; }
+
+  &.active {
+    background: $system-blue-light;
+    color: $system-blue;
+  }
+}
+
+.tab-actions {
+  display: flex;
+  gap: 6px;
+}
+
+// 排名面板
+.ranking-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: $bg-secondary;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: $bg-primary;
+  border: 1px solid $separator;
+  border-radius: $radius-lg;
+  transition: all $transition-fast;
+
+  &:hover { border-color: $system-blue; box-shadow: $shadow-md; }
+
+  &.top-3 { border-left: 3px solid $system-green; }
+
+  .rank-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+
+    &.rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; }
+    &.rank-2 { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); color: white; }
+    &.rank-3 { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
+    &.rank-other { background: $bg-hover; color: $text-secondary; }
+  }
+
+  .rank-info {
+    flex: 1;
+
+    .rank-name { font-size: 14px; font-weight: 600; color: $text-primary; }
+    .rank-meta {
+      display: flex; gap: 8px; margin-top: 2px;
+      span { font-size: 11px; color: $text-tertiary; }
+    }
+  }
+
+  .rank-scores {
+    text-align: center;
+
+    .rank-score-main {
+      font-size: 20px; font-weight: 700; display: block;
+      &.high { color: $system-green; }
+      &.medium { color: $system-orange; }
+      &.low { color: $system-red; }
+    }
+
+    .rank-score-detail {
+      display: flex; gap: 8px; margin-top: 2px;
+      span { font-size: 10px; color: $text-tertiary; }
+    }
+  }
+
+  .rank-rec {
+    .rec-badge {
+      font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 12px;
+      &.strong_recommend { background: rgba(52,199,89,0.12); color: $system-green; }
+      &.recommend { background: rgba(52,199,89,0.08); color: $system-green; }
+      &.consider { background: rgba(255,149,0,0.1); color: $system-orange; }
+      &.not_recommend { background: rgba(255,59,48,0.1); color: $system-red; }
+    }
+  }
 }
 
 // 语言切换器样式

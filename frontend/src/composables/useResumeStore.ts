@@ -82,7 +82,7 @@ export function onDevLogChange(fn: () => void) {
   return () => { _devLogListeners = _devLogListeners.filter(f => f !== fn) }
 }
 
-function devLog(level: DevLogEntry['level'], message: string) {
+export function devLog(level: DevLogEntry['level'], message: string) {
   const entry: DevLogEntry = {
     time: new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 } as any),
     level,
@@ -128,8 +128,53 @@ export const useResumeStore = defineStore('resume', () => {
     return resumes.value.filter(r => r.status === 'done').length
   })
 
+  // 加载项目下的简历
+  async function loadProjectResumes(projectId: string) {
+    await loadWailsBindings()
+    if (!isWailsEnv || !WailsApp) return
+    try {
+      const result = await WailsApp.GetProjectResumes(projectId)
+      if (result && Array.isArray(result)) {
+        resumes.value = result.map((r: any) => ({
+          id: r.id,
+          projectId: r.project_id || projectId,
+          fileName: r.file_name,
+          filePath: r.file_path,
+          fileType: r.file_type,
+          fileSize: r.file_size,
+          content: r.content,
+          status: r.status as Resume['status'],
+          score: r.score,
+          analysis: r.analysis ? {
+            overallScore: r.analysis.overall_score,
+            experienceMatch: r.analysis.experience_match,
+            skillMatch: r.analysis.skill_match,
+            educationMatch: r.analysis.education_match,
+            skillDetail: r.analysis.skill_detail || '',
+            experienceDetail: r.analysis.experience_detail || '',
+            educationDetail: r.analysis.education_detail || '',
+            candidateName: r.analysis.candidate_name || '',
+            workYears: r.analysis.work_years || '',
+            education: r.analysis.education || '',
+            currentRole: r.analysis.current_role || '',
+            summary: r.analysis.summary,
+            strengths: r.analysis.strengths || [],
+            weaknesses: r.analysis.weaknesses || [],
+            risks: r.analysis.risks || [],
+            recommendation: r.analysis.recommendation,
+            interviewSuggestions: r.analysis.interview_suggestions || []
+          } : undefined,
+          createdAt: r.created_at
+        }))
+        devLog('info', `加载项目简历: ${resumes.value.length} 份`)
+      }
+    } catch (err: any) {
+      devLog('error', `加载项目简历失败: ${err.message || err}`)
+    }
+  }
+
   // 添加简历（接受 FileInfo 数组）
-  async function addResumes(files: FileInfo[]) {
+  async function addResumes(files: FileInfo[], projectId?: string) {
     for (const file of files) {
       // 检查是否已存在相同文件名的简历
       if (resumes.value.some(r => r.fileName === file.name && r.fileSize === file.size)) {
@@ -156,10 +201,12 @@ export const useResumeStore = defineStore('resume', () => {
       // 在 Wails 环境下同步到后端磁盘
       if (isWailsEnv && WailsApp) {
         try {
-          const result = await WailsApp.RegisterResume(id, file.name, file.path, ext, file.size)
-          if (Array.isArray(result)) {
-            devLog('info', `后端注册: ${result[1]}`)
+          if (projectId) {
+            // 注册到项目
+            await WailsApp.RegisterResumeToProject(projectId, id, file.name, file.path, ext, file.size)
+            devLog('info', `注册到项目: ${projectId}`)
           } else {
+            await WailsApp.RegisterResume(id, file.name, file.path, ext, file.size)
             devLog('info', `后端注册完成`)
           }
         } catch (err: any) {
@@ -309,10 +356,18 @@ export const useResumeStore = defineStore('resume', () => {
 
       // 使用 Wails 后端批量分析
       const resumeIds = pendingResumes.map(r => r.id)
-      devLog('info', `启动后端批量分析: ${resumeIds.length} 份简历, ids=${resumeIds.join(',')}`)
+      devLog('info', `启动后端批量分析: ${resumeIds.length} 份简历`)
       try {
-        await WailsApp.StartBatchAnalysis(resumeIds, aiConfig, jobConfig)
-        devLog('info', '后端 StartBatchAnalysis 调用成功')
+        // 如果有项目上下文，使用项目分析（自动使用项目岗位配置）
+        const firstResume = pendingResumes[0]
+        const projId = (firstResume as any).projectId
+        if (projId) {
+          await WailsApp.StartProjectAnalysis(projId, aiConfig)
+          devLog('info', `项目分析已启动: ${projId}`)
+        } else {
+          await WailsApp.StartBatchAnalysis(resumeIds, aiConfig, jobConfig)
+          devLog('info', 'StartBatchAnalysis 调用成功')
+        }
       } catch (err: any) {
         devLog('error', `启动批量分析失败: ${err.message || err}`)
         isAnalyzing.value = false
@@ -504,6 +559,7 @@ export const useResumeStore = defineStore('resume', () => {
     doneCount,
     // 方法
     addResumes,
+    loadProjectResumes,
     deleteResume,
     selectResume,
     reAnalyze,

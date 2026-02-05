@@ -4,9 +4,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'Projects',
+    component: () => import('../views/ProjectListView.vue'),
+    meta: { title: '招聘项目' }
+  },
+  {
+    path: '/project/:id',
+    name: 'ProjectDetail',
     component: () => import('../views/HomeView.vue'),
-    meta: { title: '简历审核' }
+    meta: { title: '项目详情' }
   },
   {
     path: '/settings',
@@ -24,7 +30,7 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  document.title = `${to.meta.title || 'GoResumeReview'} - GoResumeReview`
+  document.title = `${to.meta.title || 'TalentLens'} - TalentLens`
   next()
 })
 
