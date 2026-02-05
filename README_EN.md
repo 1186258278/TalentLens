@@ -163,7 +163,8 @@ This project is licensed under the **GNU General Public License v3.0** - see the
 
 **TalentLens** is developed by **Wuhan QingChen TianXia Network Technology Co., Ltd.** (武汉晴辰天下网络科技有限公司)
 
-- Website: [https://qingchencloud.com](https://qingchencloud.com)
+- Product Website: [https://talentlens.qt.cool](https://talentlens.qt.cool)
+- Company: [https://qingchencloud.com](https://qingchencloud.com)
 - Products: [https://qt.cool](https://qt.cool)
 - Brand: QingChen Cloud / 晴辰云
 

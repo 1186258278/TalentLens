@@ -4,38 +4,29 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
 
 permissions:
   contents: write
 
+env:
+  GO_VERSION: '1.24'
+  NODE_VERSION: '18'
+  APP_NAME: 'TalentLens'
+
 jobs:
-  build:
+  # ==========================================
+  # 构建 Windows 版本
+  # ==========================================
+  build-windows:
+    runs-on: windows-latest
     strategy:
       matrix:
-        include:
-          # Windows AMD64
-          - os: windows-latest
-            platform: windows/amd64
-            output: TalentLens-windows-amd64.exe
-            artifact: TalentLens-windows-amd64.exe
-          # Windows ARM64
-          - os: windows-latest
-            platform: windows/arm64
-            output: TalentLens-windows-arm64.exe
-            artifact: TalentLens-windows-arm64.exe
-          # macOS AMD64 (Intel)
-          - os: macos-latest
-            platform: darwin/amd64
-            output: TalentLens-macos-amd64
-            artifact: TalentLens-macos-amd64.zip
-          # macOS ARM64 (Apple Silicon)
-          - os: macos-latest
-            platform: darwin/arm64
-            output: TalentLens-macos-arm64
-            artifact: TalentLens-macos-arm64.zip
-
-    runs-on: ${{ matrix.os }}
-
+        arch: [amd64, arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,13 +34,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -60,51 +51,139 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # macOS: Install dependencies
-      - name: Install macOS dependencies
-        if: runner.os == 'macOS'
-        run: brew install create-dmg || true
+      - name: Build for Windows ${{ matrix.arch }}
+        run: wails build -platform windows/${{ matrix.arch }} -ldflags "-s -w"
 
-      # Build
-      - name: Build application
-        run: wails build -platform ${{ matrix.platform }}
-
-      # Windows: Rename output
-      - name: Rename Windows output
-        if: runner.os == 'Windows'
+      - name: Package
         shell: pwsh
         run: |
-          $src = "build/bin/TalentLens.exe"
-          $dst = "build/bin/${{ matrix.artifact }}"
-          if (Test-Path $src) {
-            Copy-Item $src $dst
-          }
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $artifact = "${{ env.APP_NAME }}-$version-windows-${{ matrix.arch }}.exe"
+          Copy-Item "build/bin/${{ env.APP_NAME }}.exe" "build/bin/$artifact"
+          echo "ARTIFACT=$artifact" >> $env:GITHUB_ENV
 
-      # macOS: Package as zip
-      - name: Package macOS output
-        if: runner.os == 'macOS'
-        run: |
-          cd build/bin
-          if [ -d "TalentLens.app" ]; then
-            zip -r "${{ matrix.artifact }}" TalentLens.app
-          elif [ -f "TalentLens" ]; then
-            chmod +x TalentLens
-            zip "${{ matrix.artifact }}" TalentLens
-          fi
-
-      # Upload artifact
-      - name: Upload build artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: build/bin/${{ matrix.artifact }}
+          name: windows-${{ matrix.arch }}
+          path: build/bin/${{ env.ARTIFACT }}
           retention-days: 5
 
-  # Create GitHub Release
-  release:
-    needs: build
-    runs-on: ubuntu-latest
+  # ==========================================
+  # 构建 macOS 版本
+  # ==========================================
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build for macOS ${{ matrix.arch }}
+        run: wails build -platform darwin/${{ matrix.arch }} -ldflags "-s -w"
+
+      - name: Package as DMG/ZIP
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          cd build/bin
+          if [ -d "${{ env.APP_NAME }}.app" ]; then
+            zip -r "${{ env.APP_NAME }}-${version}-macos-${{ matrix.arch }}.zip" "${{ env.APP_NAME }}.app"
+          elif [ -f "${{ env.APP_NAME }}" ]; then
+            chmod +x "${{ env.APP_NAME }}"
+            zip "${{ env.APP_NAME }}-${version}-macos-${{ matrix.arch }}.zip" "${{ env.APP_NAME }}"
+          fi
+          echo "ARTIFACT=${{ env.APP_NAME }}-${version}-macos-${{ matrix.arch }}.zip" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: build/bin/${{ env.ARTIFACT }}
+          retention-days: 5
+
+  # ==========================================
+  # 构建 Linux 版本
+  # ==========================================
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build for Linux ${{ matrix.arch }}
+        run: wails build -platform linux/${{ matrix.arch }} -ldflags "-s -w"
+
+      - name: Package
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          cd build/bin
+          chmod +x "${{ env.APP_NAME }}" 2>/dev/null || true
+          tar czf "${{ env.APP_NAME }}-${version}-linux-${{ matrix.arch }}.tar.gz" "${{ env.APP_NAME }}"
+          echo "ARTIFACT=${{ env.APP_NAME }}-${version}-linux-${{ matrix.arch }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: build/bin/${{ env.ARTIFACT }}
+          retention-days: 5
+
+  # ==========================================
+  # 发布 Release
+  # ==========================================
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,18 +191,83 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: dist
 
-      - name: List artifacts
-        run: find artifacts -type f | head -20
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find dist -type f \( -name "*.exe" -o -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} release/ \;
+          echo "=== Release files ==="
+          ls -lh release/
+
+      - name: Generate release body
+        id: release_body
+        run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          cat > release_notes.md << 'NOTES_EOF'
+          ## TalentLens ${{ github.ref_name }}
+
+          AI 驱动的智能简历筛选工具 | AI-Powered Resume Screening Tool
+
+          ### 下载 / Download
+
+          | 平台 | 架构 | 文件 |
+          |------|------|------|
+          | Windows | x64 | `TalentLens-${version}-windows-amd64.exe` |
+          | Windows | ARM64 | `TalentLens-${version}-windows-arm64.exe` |
+          | macOS | Intel | `TalentLens-${version}-macos-amd64.zip` |
+          | macOS | Apple Silicon | `TalentLens-${version}-macos-arm64.zip` |
+          | Linux | x64 | `TalentLens-${version}-linux-amd64.tar.gz` |
+          | Linux | ARM64 | `TalentLens-${version}-linux-arm64.tar.gz` |
+
+          ### 使用说明
+
+          - **Windows**: 下载 `.exe` 文件，双击运行
+          - **macOS**: 下载 `.zip` 解压后拖入 Applications
+          - **Linux**: 下载 `.tar.gz` 解压后运行
+
+          ---
+
+          官网: https://talentlens.qt.cool
+          文档: https://github.com/1186258278/TalentLens
+          NOTES_EOF
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          name: "TalentLens ${{ github.ref_name }}"
+          body_path: release_notes.md
           draft: false
           prerelease: false
-          files: |
-            artifacts/**/*
+          files: release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================
+  # 部署 GitHub Pages 官网
+  # ==========================================
+  deploy-pages:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

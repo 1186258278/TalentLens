@@ -163,7 +163,8 @@ TalentLens/
 
 **TalentLens** 由 **武汉晴辰天下网络科技有限公司** 开发维护。
 
-- 官网：[https://qingchencloud.com](https://qingchencloud.com)
+- 产品官网：[https://talentlens.qt.cool](https://talentlens.qt.cool)
+- 公司官网：[https://qingchencloud.com](https://qingchencloud.com)
 - 产品导航：[https://qt.cool](https://qt.cool)
 - 品牌：晴辰云 / 晴辰
 
