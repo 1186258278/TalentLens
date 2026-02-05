@@ -1,14 +1,10 @@
 <p align="center">
   <h1 align="center">TalentLens</h1>
-  <p align="center">AI-Powered Resume Screening Tool for HR</p>
   <p align="center">AI 驱动的智能简历筛选工具，专为 HR 设计</p>
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> ·
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#development">Development</a> ·
-  <a href="#license">License</a>
+  <a href="README_EN.md">English</a> | 中文
 </p>
 
 <p align="center">
@@ -16,43 +12,50 @@
   <img src="https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js" alt="Vue 3">
   <img src="https://img.shields.io/badge/Wails-v2-red" alt="Wails">
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue" alt="License">
-  <img src="https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows" alt="Windows">
+  <img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows">
+  <img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" alt="macOS">
 </p>
 
 ---
 
-## What is TalentLens?
+## 简介
 
-**TalentLens** is a lightweight, elegant desktop application that helps HR professionals screen resumes efficiently using AI. Simply drag-and-drop resumes, and TalentLens will analyze, score, and rank candidates based on your job requirements.
+**TalentLens** 是一款轻量级桌面应用，帮助 HR 利用 AI 高效筛选简历。只需拖入简历文件，即可自动分析、打分、排序，根据岗位需求给出专业推荐建议。
 
-**TalentLens** 是一款轻量级桌面应用，帮助 HR 利用 AI 高效筛选简历。只需拖入简历文件，即可自动分析、打分、排序，根据岗位需求给出专业建议。
-
----
-
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| **Drag & Drop** | 拖拽上传 PDF / Word / 图片格式简历 |
-| **AI Analysis** | 基于 OpenAI 兼容接口进行智能分析 |
-| **Scoring** | 多维度评分：技能匹配、经验匹配、学历匹配 |
-| **Recommendations** | AI 给出推荐/不推荐结论及详细理由 |
-| **Job Templates** | 内置多种岗位模板，一键配置需求 |
-| **Provider Presets** | 预设 DeepSeek / OpenAI / 智谱 / Moonshot 等服务商 |
-| **i18n** | 支持简体中文 / 繁体中文 / English |
-| **macOS Style UI** | 毛玻璃标题栏、交通灯按钮、精致 UI |
-| **Dev Console** | 内置开发者调试面板 (F12) |
-| **Real-time Progress** | 分析过程实时可视化进度 |
+支持 **Windows** 和 **macOS** 双平台。
 
 ---
 
-## Quick Start
+## 功能特性
 
-### Download
+| 功能 | 说明 |
+|------|------|
+| **拖拽上传** | 支持 PDF / Word / 图片格式简历 |
+| **AI 智能分析** | 基于 OpenAI 兼容接口，多维度深度分析 |
+| **综合评分** | 技能匹配度、经验匹配度、学历匹配度 |
+| **推荐结论** | AI 给出推荐/不推荐结论及详细理由 |
+| **岗位模板** | 内置多种岗位模板，一键配置需求 |
+| **多服务商** | 预设 DeepSeek / OpenAI / 智谱 / Moonshot / SiliconFlow |
+| **国际化** | 支持简体中文 / 繁体中文 / English |
+| **macOS 风格 UI** | 毛玻璃标题栏、交通灯按钮、精致界面 |
+| **实时进度** | 分析过程实时可视化进度显示 |
+| **开发者工具** | 内置调试面板 (F12) |
 
-从 [Releases](https://github.com/1186258278/TalentLens/releases) 下载最新版本的 `TalentLens.exe`，双击运行即可。
+---
 
-### First-time Setup
+## 快速开始
+
+### 下载安装
+
+从 [Releases](https://github.com/1186258278/TalentLens/releases) 页面下载最新版本：
+
+- **Windows**: `TalentLens-windows-amd64.exe`
+- **macOS (Intel)**: `TalentLens-macos-amd64.zip`
+- **macOS (Apple Silicon)**: `TalentLens-macos-arm64.zip`
+
+下载后双击运行即可，无需安装。
+
+### 首次配置
 
 1. 打开应用，点击右上角 **齿轮图标** 进入设置
 2. 选择 AI 服务商（推荐 DeepSeek，新用户有免费额度）
@@ -62,89 +65,107 @@
 
 ---
 
-## Development
+## 支持的 AI 服务商
 
-### Prerequisites
+| 服务商 | 默认模型 | 说明 |
+|--------|---------|------|
+| DeepSeek | deepseek-chat | 推荐，新用户有免费额度 |
+| OpenAI | gpt-4o-mini | 全球最流行 |
+| 智谱 AI | glm-4-flash | 国产大模型 |
+| Moonshot (月之暗面) | moonshot-v1-8k | 国产大模型 |
+| SiliconFlow | Qwen/Qwen2.5-7B | 模型聚合平台 |
+| 自定义 | - | 任何 OpenAI 兼容接口 |
+
+---
+
+## 从源码构建
+
+### 环境要求
 
 - [Go](https://go.dev/) >= 1.21
 - [Node.js](https://nodejs.org/) >= 18
 - [Wails CLI](https://wails.io/) v2
 
-### Build from Source
+### 构建步骤
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/1186258278/TalentLens.git
 cd TalentLens
 
-# Install frontend dependencies
+# 安装前端依赖
 cd frontend && npm install && cd ..
 
-# Development mode (hot reload)
+# 开发模式 (热重载)
 wails dev
 
-# Production build
+# 生产构建
 wails build
+
+# 跨平台构建
+wails build -platform darwin/arm64   # macOS Apple Silicon
+wails build -platform darwin/amd64   # macOS Intel
+wails build -platform windows/amd64  # Windows
 ```
 
-### Tech Stack
+---
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Go 1.23, Wails v2 |
-| Frontend | Vue 3, TypeScript, Vite |
-| UI Library | Element Plus |
-| State | Pinia |
-| i18n | vue-i18n |
-| Styling | SCSS, macOS Design System |
+## 技术栈
 
-### Project Structure
+| 层级 | 技术 |
+|------|------|
+| 后端 | Go 1.23, Wails v2 |
+| 前端 | Vue 3, TypeScript, Vite |
+| UI 组件 | Element Plus |
+| 状态管理 | Pinia |
+| 国际化 | vue-i18n |
+| 样式 | SCSS, macOS 设计系统 |
+
+---
+
+## 项目结构
 
 ```
 TalentLens/
-├── app.go                 # Go backend (AI client, file processing, API)
-├── wails.json             # Wails configuration
+├── app.go                 # Go 后端 (AI 客户端、文件处理、API)
+├── wails.json             # Wails 项目配置
 ├── frontend/
 │   ├── src/
-│   │   ├── views/         # HomeView, SettingsView
-│   │   ├── components/    # TitleBar, ResumeCard, DropZone, DevPanel...
-│   │   ├── composables/   # Pinia stores
-│   │   ├── locales/       # i18n translations
-│   │   ├── styles/        # macOS theme variables
-│   │   └── data/          # Job presets, provider configs
+│   │   ├── views/         # 页面视图 (HomeView, SettingsView)
+│   │   ├── components/    # 组件 (TitleBar, ResumeCard, DropZone...)
+│   │   ├── composables/   # Pinia Store
+│   │   ├── locales/       # 国际化翻译文件
+│   │   ├── styles/        # macOS 主题变量
+│   │   └── data/          # 岗位模板、服务商配置
 │   └── index.html
-├── build/                 # Build assets & installers
-└── docs/                  # Project documentation
+├── build/                 # 构建资源和安装脚本
+├── docs/                  # 项目文档
+├── .github/workflows/     # CI/CD 自动构建
+├── CHANGELOG.md           # 版本变更日志
+└── CONTRIBUTING.md        # 贡献指南
 ```
 
 ---
 
-## Supported AI Providers
+## 参与贡献
 
-| Provider | Default Model | Notes |
-|----------|--------------|-------|
-| DeepSeek | deepseek-chat | Recommended, free quota for new users |
-| OpenAI | gpt-4o-mini | Most popular |
-| Zhipu AI (智谱) | glm-4-flash | Chinese LLM |
-| Moonshot (月之暗面) | moonshot-v1-8k | Chinese LLM |
-| SiliconFlow | Qwen/Qwen2.5-7B | Aggregator |
-| Custom | - | Any OpenAI-compatible API |
+欢迎参与贡献！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解开发规范和提交流程。
 
 ---
 
-## License
+## 许可证
 
-This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+本项目采用 **GNU General Public License v3.0** 开源协议，详见 [LICENSE](LICENSE)。
 
 ---
 
-## About
+## 关于
 
-**TalentLens** is developed by **武汉晴辰天下网络科技有限公司** (Wuhan QingChen TianXia Network Technology Co., Ltd.)
+**TalentLens** 由 **武汉晴辰天下网络科技有限公司** 开发维护。
 
-- Website: [https://qingchencloud.com](https://qingchencloud.com)
-- Products: [https://qt.cool](https://qt.cool)
-- Brand: 晴辰云 / 晴辰
+- 官网：[https://qingchencloud.com](https://qingchencloud.com)
+- 产品导航：[https://qt.cool](https://qt.cool)
+- 品牌：晴辰云 / 晴辰
 
 ---
 

@@ -1,0 +1,129 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # Windows AMD64
+          - os: windows-latest
+            platform: windows/amd64
+            output: TalentLens-windows-amd64.exe
+            artifact: TalentLens-windows-amd64.exe
+          # Windows ARM64
+          - os: windows-latest
+            platform: windows/arm64
+            output: TalentLens-windows-arm64.exe
+            artifact: TalentLens-windows-arm64.exe
+          # macOS AMD64 (Intel)
+          - os: macos-latest
+            platform: darwin/amd64
+            output: TalentLens-macos-amd64
+            artifact: TalentLens-macos-amd64.zip
+          # macOS ARM64 (Apple Silicon)
+          - os: macos-latest
+            platform: darwin/arm64
+            output: TalentLens-macos-arm64
+            artifact: TalentLens-macos-arm64.zip
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # macOS: Install dependencies
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install create-dmg || true
+
+      # Build
+      - name: Build application
+        run: wails build -platform ${{ matrix.platform }}
+
+      # Windows: Rename output
+      - name: Rename Windows output
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $src = "build/bin/TalentLens.exe"
+          $dst = "build/bin/${{ matrix.artifact }}"
+          if (Test-Path $src) {
+            Copy-Item $src $dst
+          }
+
+      # macOS: Package as zip
+      - name: Package macOS output
+        if: runner.os == 'macOS'
+        run: |
+          cd build/bin
+          if [ -d "TalentLens.app" ]; then
+            zip -r "${{ matrix.artifact }}" TalentLens.app
+          elif [ -f "TalentLens" ]; then
+            chmod +x TalentLens
+            zip "${{ matrix.artifact }}" TalentLens
+          fi
+
+      # Upload artifact
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/bin/${{ matrix.artifact }}
+          retention-days: 5
+
+  # Create GitHub Release
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | head -20
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

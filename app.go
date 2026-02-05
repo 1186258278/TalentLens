@@ -163,13 +163,25 @@ func (a *App) startup(ctx context.Context) {
 		}
 	})
 
-	log.Println("GoResumeReview 已启动")
+	log.Println("TalentLens 已启动")
+}
+
+// getDataDir 获取跨平台数据存储目录
+// Windows: %APPDATA%/TalentLens
+// macOS:   ~/Library/Application Support/TalentLens
+// Linux:   ~/.config/TalentLens
+func (a *App) getDataDir() string {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = filepath.Join(os.Getenv("HOME"), ".config")
+	}
+	dir := filepath.Join(configDir, "TalentLens")
+	os.MkdirAll(dir, 0755)
+	return dir
 }
 
 func (a *App) getConfigPath() string {
-	dir := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview")
-	os.MkdirAll(dir, 0755)
-	return filepath.Join(dir, "config.json")
+	return filepath.Join(a.getDataDir(), "config.json")
 }
 
 func (a *App) loadConfig() {
@@ -284,7 +296,7 @@ func (a *App) extractFromBytes(data []byte) string {
 }
 
 func (a *App) saveResume(r *Resume) {
-	dir := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview", "resumes")
+	dir := filepath.Join(a.getDataDir(), "resumes")
 	os.MkdirAll(dir, 0755)
 	data, _ := json.MarshalIndent(r, "", "  ")
 	os.WriteFile(filepath.Join(dir, r.ID+".json"), data, 0644)
@@ -335,7 +347,7 @@ func (a *App) SaveConfig(cfg *Config) error {
 }
 
 func (a *App) GetResumes() []*Resume {
-	dir := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview", "resumes")
+	dir := filepath.Join(a.getDataDir(), "resumes")
 	os.MkdirAll(dir, 0755)
 
 	var resumes []*Resume
@@ -353,12 +365,12 @@ func (a *App) GetResumes() []*Resume {
 }
 
 func (a *App) DeleteResume(id string) error {
-	path := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview", "resumes", id+".json")
+	path := filepath.Join(a.getDataDir(), "resumes", id+".json")
 	return os.Remove(path)
 }
 
 func (a *App) ReAnalyzeResume(id string) error {
-	path := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview", "resumes", id+".json")
+	path := filepath.Join(a.getDataDir(), "resumes", id+".json")
 	data, _ := os.ReadFile(path)
 	var r Resume
 	json.Unmarshal(data, &r)
@@ -370,7 +382,7 @@ func (a *App) ReAnalyzeResume(id string) error {
 }
 
 func (a *App) ClearResumes() error {
-	dir := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview", "resumes")
+	dir := filepath.Join(a.getDataDir(), "resumes")
 	os.RemoveAll(dir)
 	os.MkdirAll(dir, 0755)
 	return nil
@@ -456,7 +468,7 @@ func (a *App) TestAIConnection(cfg *AIConfig) (bool, string) {
 // AnalyzeResume 分析单个简历
 func (a *App) AnalyzeResume(resumeID string, cfg *AIConfig, jobCfg *JobConfig) (*AnalysisResult, error) {
 	// 读取简历
-	path := filepath.Join(os.Getenv("APPDATA"), "GoResumeReview", "resumes", resumeID+".json")
+	path := filepath.Join(a.getDataDir(), "resumes", resumeID+".json")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("简历不存在: %v", err)
