@@ -1,0 +1,46 @@
+# Build outputs
+build/bin/
+bin/
+*.exe
+!.gitkeep
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# Dependencies
+go.sum
+
+# Environment & secrets
+.env
+.env.*
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test & temp files
+test_build.exe
+*.log
+*.tmp
+
+# Wails generated bindings (auto-regenerated on build, but kept for IDE support)
+# frontend/wailsjs/
+
+# Sample files (large binary images)
+samples/
+
+# Wails cache
+*.md5
+
+# Cursor / editor
+.cursor/

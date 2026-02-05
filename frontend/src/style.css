@@ -1,0 +1,340 @@
+/* ==========================================
+   GoResumeReview - 全局样式
+   设计系统：专业、简洁、现代
+   ========================================== */
+
+/* ==========================================
+   CSS 变量 - 设计令牌
+   ========================================== */
+:root {
+  /* 主色系 - 深靛蓝 */
+  --color-primary: #1e3a5f;
+  --color-primary-light: #2d5a87;
+  --color-primary-lighter: #e8f0f7;
+  --color-accent: #0ea5e9;
+
+  /* 背景色 */
+  --color-bg-page: #f8f9fb;
+  --color-bg-card: #ffffff;
+  --color-bg-section: #fafbfc;
+
+  /* 边框色 */
+  --color-border: #e2e7ed;
+  --color-divider: #eef1f5;
+
+  /* 文字色 */
+  --color-text-primary: #1a2332;
+  --color-text-secondary: #5a6678;
+  --color-text-muted: #8b95a5;
+
+  /* 功能色 */
+  --color-success: #16a34a;
+  --color-success-light: #dcfce7;
+  --color-warning: #d97706;
+  --color-warning-light: #fef3c7;
+  --color-error: #dc2626;
+  --color-error-light: #fee2e2;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(30, 58, 95, 0.06);
+  --shadow-md: 0 4px 12px rgba(30, 58, 95, 0.08);
+  --shadow-lg: 0 8px 24px rgba(30, 58, 95, 0.12);
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* ==========================================
+   基础重置
+   ========================================== */
+html {
+  background-color: var(--color-bg-page);
+  text-align: left;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-page);
+}
+
+#app {
+  height: 100vh;
+  text-align: left;
+}
+
+/* ==========================================
+   Element Plus 主题覆盖
+   ========================================== */
+
+/* 主色调覆盖 */
+:root {
+  --el-color-primary: #1e3a5f;
+  --el-color-primary-light-3: #4a6a8a;
+  --el-color-primary-light-5: #6d8aa8;
+  --el-color-primary-light-7: #a3b9cd;
+  --el-color-primary-light-8: #c1d1e0;
+  --el-color-primary-light-9: #e8f0f7;
+  --el-color-primary-dark-2: #182e4c;
+
+  /* 功能色覆盖 */
+  --el-color-success: #16a34a;
+  --el-color-success-light-3: #4aba73;
+  --el-color-success-light-5: #6fcb8f;
+  --el-color-success-light-7: #a8e0bc;
+  --el-color-success-light-8: #c7ecd5;
+  --el-color-success-light-9: #dcfce7;
+
+  --el-color-warning: #d97706;
+  --el-color-warning-light-3: #e49438;
+  --el-color-warning-light-5: #eaab5c;
+  --el-color-warning-light-7: #f2cc97;
+  --el-color-warning-light-8: #f6ddb5;
+  --el-color-warning-light-9: #fef3c7;
+
+  --el-color-danger: #dc2626;
+  --el-color-danger-light-3: #e55151;
+  --el-color-danger-light-5: #eb7272;
+  --el-color-danger-light-7: #f3a5a5;
+  --el-color-danger-light-8: #f7c2c2;
+  --el-color-danger-light-9: #fee2e2;
+
+  --el-color-info: #5a6678;
+  --el-color-info-light-3: #7d8a9a;
+  --el-color-info-light-5: #96a2b0;
+  --el-color-info-light-7: #bfc7d0;
+  --el-color-info-light-8: #d4dae1;
+  --el-color-info-light-9: #eef1f5;
+
+  /* 文字色 */
+  --el-text-color-primary: #1a2332;
+  --el-text-color-regular: #5a6678;
+  --el-text-color-secondary: #8b95a5;
+  --el-text-color-placeholder: #a8b2bf;
+
+  /* 边框色 */
+  --el-border-color: #e2e7ed;
+  --el-border-color-light: #eef1f5;
+  --el-border-color-lighter: #f5f7fa;
+  --el-border-color-extra-light: #fafbfc;
+
+  /* 填充色 */
+  --el-fill-color: #f8f9fb;
+  --el-fill-color-light: #fafbfc;
+  --el-fill-color-lighter: #fcfcfd;
+  --el-fill-color-blank: #ffffff;
+
+  /* 背景色 */
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f8f9fb;
+  --el-bg-color-overlay: #ffffff;
+
+  /* 圆角 */
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: 100%;
+
+  /* 字体 */
+  --el-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --el-font-size-base: 14px;
+}
+
+/* 按钮优化 */
+.el-button {
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.el-button--primary {
+  box-shadow: 0 2px 6px rgba(30, 58, 95, 0.2);
+}
+
+.el-button--primary:hover {
+  box-shadow: 0 4px 10px rgba(30, 58, 95, 0.25);
+}
+
+/* 输入框优化 */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: var(--radius-sm) !important;
+  transition: all 0.2s ease !important;
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-primary-light) inset !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--color-primary) inset, 0 0 0 3px rgba(30, 58, 95, 0.1) !important;
+}
+
+/* 卡片优化 */
+.el-card {
+  border-radius: var(--radius-md);
+  border-color: var(--color-divider);
+  box-shadow: var(--shadow-sm);
+}
+
+.el-card__header {
+  background-color: var(--color-bg-section);
+  border-bottom-color: var(--color-divider);
+  padding: 14px 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* 对话框优化 */
+.el-dialog {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.el-dialog__header {
+  background-color: var(--color-bg-section);
+  border-bottom: 1px solid var(--color-divider);
+  padding: 16px 20px;
+  margin-right: 0;
+}
+
+.el-dialog__title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.el-dialog__body {
+  padding: 24px;
+}
+
+/* 消息提示优化 */
+.el-message {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: none;
+}
+
+/* 标签优化 */
+.el-tag {
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+/* 进度条优化 */
+.el-progress-bar__outer {
+  border-radius: 4px;
+  background-color: rgba(30, 58, 95, 0.08);
+}
+
+.el-progress-bar__inner {
+  border-radius: 4px;
+}
+
+/* 空状态优化 */
+.el-empty__description {
+  color: var(--color-text-muted);
+}
+
+/* 表单优化 */
+.el-form-item__label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* 选择器标签 */
+.el-select__tags .el-tag {
+  background-color: var(--color-primary-lighter);
+  border-color: transparent;
+  color: var(--color-primary);
+}
+
+/* ==========================================
+   滚动条样式
+   ========================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 58, 95, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 58, 95, 0.25);
+}
+
+/* ==========================================
+   工具类
+   ========================================== */
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.bg-page {
+  background-color: var(--color-bg-page);
+}
+
+.bg-card {
+  background-color: var(--color-bg-card);
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}

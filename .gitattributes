@@ -1,0 +1,43 @@
+# GoResumeReview Git Attributes
+#
+# Configure line ending handling for cross-platform development
+
+# Set default behavior to normalize line endings
+* text=auto
+
+# Force binary files to be treated as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.exe~ binary
+
+# Handle Go files
+*.go text=auto eol=lf
+
+# Handle Vue/TypeScript files
+*.vue text=auto eol=lf
+*.ts text=auto eol=lf
+*.js text=auto eol=lf
+*.json text=auto eol=lf
+
+# Markdown files
+*.md text=auto eol=lf
+*.markdown text=auto eol=lf
+
+# Shell scripts
+*.sh text=auto eol=lf
+
+# Configure git to not try to merge binary files
+*.png -merge
+*.jpg -merge
+*.jpeg -merge
+*.gif -merge
+*.ico -merge
+*.pdf -merge

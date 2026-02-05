@@ -1,0 +1,63 @@
+// ============================================
+// macOS 风格设计系统变量
+// ============================================
+
+// 系统颜色
+$system-blue: #007AFF;
+$system-blue-hover: #0066D6;
+$system-blue-light: rgba(0, 122, 255, 0.1);
+$system-green: #34C759;
+$system-orange: #FF9500;
+$system-red: #FF3B30;
+$system-yellow: #FFCC00;
+
+// 灰度系统
+$gray-1: #8E8E93;
+$gray-2: #AEAEB2;
+$gray-3: #C7C7CC;
+$gray-4: #D1D1D6;
+$gray-5: #E5E5EA;
+$gray-6: #F2F2F7;
+
+// 背景层级
+$bg-primary: #FFFFFF;
+$bg-secondary: #F2F2F7;
+$bg-sidebar: rgba(246, 246, 246, 0.85);
+$bg-titlebar: rgba(246, 246, 246, 0.78);
+$bg-hover: rgba(0, 0, 0, 0.04);
+$bg-active: rgba(0, 0, 0, 0.06);
+
+// 文字颜色
+$text-primary: #1D1D1F;
+$text-secondary: #86868B;
+$text-tertiary: #AEAEB2;
+$text-placeholder: #C7C7CC;
+
+// 分隔线
+$separator: rgba(60, 60, 67, 0.12);
+$separator-opaque: #C6C6C8;
+
+// 圆角
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 10px;
+
+// 阴影
+$shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// 导航
+$nav-icon-size: 18px;
+$nav-item-height: 32px;
+$nav-text-size: 13px;
+
+// 标题栏
+$titlebar-height: 40px;
+
+// 字体
+$font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+// 动画
+$transition-fast: 0.12s ease;
+$transition-normal: 0.2s ease;
