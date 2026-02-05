@@ -33,14 +33,19 @@ test_build.exe
 *.log
 *.tmp
 
-# Wails generated bindings (auto-regenerated on build, but kept for IDE support)
-# frontend/wailsjs/
+# Wails auto-generated bindings (regenerated on every `wails build`)
+frontend/wailsjs/
 
 # Sample files (large binary images)
 samples/
 
 # Wails cache
 *.md5
+
+# Unused template assets
+frontend/README.md
+frontend/src/assets/images/logo-universal.png
+frontend/src/assets/fonts/
 
 # Cursor / editor
 .cursor/
