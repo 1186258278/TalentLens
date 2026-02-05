@@ -48,7 +48,9 @@ export default {
     language: 'Language',
     saved: 'Settings saved',
     resetDone: 'Settings reset',
-    resetAllSettings: 'Reset All Settings'
+    resetAllSettings: 'Reset All Settings',
+    dataPath: 'Data Storage Path',
+    openDataDir: 'Open Folder'
   },
 
   ai: {

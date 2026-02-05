@@ -48,7 +48,9 @@ export default {
     language: '介面語言',
     saved: '設定已儲存',
     resetDone: '設定已重設',
-    resetAllSettings: '重設所有設定'
+    resetAllSettings: '重設所有設定',
+    dataPath: '資料儲存路徑',
+    openDataDir: '開啟目錄'
   },
 
   ai: {

@@ -16,11 +16,15 @@ export function ExportProjectReport(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<main.Config>;
 
+export function GetDataDir():Promise<string>;
+
 export function GetProject(arg1:string):Promise<main.Project>;
 
 export function GetProjectRanking(arg1:string):Promise<Array<main.Resume>>;
 
 export function GetProjectResumes(arg1:string):Promise<Array<main.Resume>>;
+
+export function GetProjectStats(arg1:string):Promise<Record<string, any>>;
 
 export function GetProjects():Promise<Array<main.Project>>;
 
@@ -31,6 +35,8 @@ export function GetResumes():Promise<Array<main.Resume>>;
 export function ImportResumesToProject(arg1:string,arg2:Array<string>):Promise<number>;
 
 export function MigrateExistingResumes():Promise<string>;
+
+export function OpenDataDir():Promise<void>;
 
 export function OpenExportDir():Promise<void>;
 

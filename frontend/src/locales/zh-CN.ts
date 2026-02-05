@@ -48,7 +48,9 @@ export default {
     language: '界面语言',
     saved: '设置已保存',
     resetDone: '设置已重置',
-    resetAllSettings: '重置所有设置'
+    resetAllSettings: '重置所有设置',
+    dataPath: '数据存储路径',
+    openDataDir: '打开目录'
   },
 
   ai: {

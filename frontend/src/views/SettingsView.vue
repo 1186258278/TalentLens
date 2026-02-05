@@ -185,6 +185,14 @@
                 {{ $t('settings.resetAllSettings') }}
               </el-button>
             </div>
+
+            <div class="form-item" style="margin-top: 24px;">
+              <label>{{ $t('settings.dataPath') }}</label>
+              <div class="data-path-row">
+                <span class="path-text">{{ dataDir || '~/Documents/TalentLens' }}</span>
+                <el-button size="small" round @click="openDataDir">{{ $t('settings.openDataDir') }}</el-button>
+              </div>
+            </div>
           </div>
         </section>
       </main>
@@ -212,6 +220,7 @@ const { t } = useI18n()
 const activeTab = ref('ai')
 const testing = ref(false)
 const selectedPresetId = ref<string>('')
+const dataDir = ref('')
 
 const tabs = [
   { id: 'ai', label: 'settings.aiConfig', icon: markRaw(Connection) },
@@ -326,7 +335,20 @@ function resetSettings() {
   ElMessage.success(t('settings.resetDone'))
 }
 
-onMounted(() => {
+async function openDataDir() {
+  try {
+    const WailsApp = await import('../../wailsjs/go/main/App')
+    await WailsApp.OpenDataDir()
+  } catch {}
+}
+
+onMounted(async () => {
+  // 加载数据目录路径
+  try {
+    const WailsApp = await import('../../wailsjs/go/main/App')
+    dataDir.value = await WailsApp.GetDataDir()
+  } catch {}
+
   const saved = localStorage.getItem('goresume_settings')
   if (saved) {
     try {
@@ -639,5 +661,23 @@ onMounted(() => {
   &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
   &::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+}
+
+.data-path-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .path-text {
+    flex: 1;
+    font-size: 12px;
+    color: $text-secondary;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: $radius-sm;
+    border: 1px solid $separator;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    word-break: break-all;
+  }
 }
 </style>

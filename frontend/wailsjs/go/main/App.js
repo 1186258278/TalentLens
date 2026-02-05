@@ -30,6 +30,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetDataDir() {
+  return window['go']['main']['App']['GetDataDir']();
+}
+
 export function GetProject(arg1) {
   return window['go']['main']['App']['GetProject'](arg1);
 }
@@ -40,6 +44,10 @@ export function GetProjectRanking(arg1) {
 
 export function GetProjectResumes(arg1) {
   return window['go']['main']['App']['GetProjectResumes'](arg1);
+}
+
+export function GetProjectStats(arg1) {
+  return window['go']['main']['App']['GetProjectStats'](arg1);
 }
 
 export function GetProjects() {
@@ -60,6 +68,10 @@ export function ImportResumesToProject(arg1, arg2) {
 
 export function MigrateExistingResumes() {
   return window['go']['main']['App']['MigrateExistingResumes']();
+}
+
+export function OpenDataDir() {
+  return window['go']['main']['App']['OpenDataDir']();
 }
 
 export function OpenExportDir() {

@@ -38,6 +38,8 @@
           </div>
           <div class="card-stats">
             <span class="stat">{{ project.resume_ids?.length || 0 }} 份简历</span>
+            <span class="stat" v-if="projectStats[project.id]">已分析 {{ projectStats[project.id].analyzed }}/{{ projectStats[project.id].total }}</span>
+            <span class="stat" v-if="projectStats[project.id]?.maxScore">最高分 {{ projectStats[project.id].maxScore }}</span>
             <span class="stat-badge" :class="project.status">{{ statusText(project.status) }}</span>
           </div>
           <div class="card-time">{{ formatDate(project.created_at) }}</div>
@@ -120,6 +122,20 @@ const { t } = useI18n()
 const projectStore = useProjectStore()
 
 const showCreateDialog = ref(false)
+const projectStats = ref<Record<string, any>>({})
+
+// 加载项目统计
+async function loadStats() {
+  let WailsApp: any = null
+  try { WailsApp = await import('../../wailsjs/go/main/App') } catch { return }
+  if (!WailsApp) return
+  for (const p of projectStore.projects) {
+    try {
+      const stats = await WailsApp.GetProjectStats(p.id)
+      projectStats.value[p.id] = stats
+    } catch {}
+  }
+}
 const newProject = reactive({
   name: '',
   jobTitle: '高级Go开发工程师',
@@ -187,6 +203,8 @@ onMounted(async () => {
   if (projectStore.projects.length === 0) {
     await projectStore.migrateExisting()
   }
+  // 加载统计
+  await loadStats()
 })
 </script>
 

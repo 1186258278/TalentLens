@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"math"
 	"regexp"
 	"strings"
 	"time"
@@ -78,10 +79,10 @@ type Resume struct {
 
 // AnalysisResult AI分析结果
 type AnalysisResult struct {
-	OverallScore    int    `json:"overall_score"`
-	SkillMatch      int    `json:"skill_match"`
-	ExperienceMatch int    `json:"experience_match"`
-	EducationMatch  int    `json:"education_match"`
+	OverallScore    float64 `json:"overall_score"`
+	SkillMatch      float64 `json:"skill_match"`
+	ExperienceMatch float64 `json:"experience_match"`
+	EducationMatch  float64 `json:"education_match"`
 	Recommendation  string `json:"recommendation"`
 
 	// 详细分析维度
@@ -197,18 +198,32 @@ func (a *App) startup(ctx context.Context) {
 	log.Println("TalentLens 已启动")
 }
 
-// getDataDir 获取跨平台数据存储目录
-// Windows: %APPDATA%/TalentLens
-// macOS:   ~/Library/Application Support/TalentLens
-// Linux:   ~/.config/TalentLens
+// getDataDir 获取固定数据存储目录
+// Windows: %USERPROFILE%/Documents/TalentLens
+// macOS:   ~/Documents/TalentLens
+// Linux:   ~/Documents/TalentLens
 func (a *App) getDataDir() string {
-	configDir, err := os.UserConfigDir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		configDir = filepath.Join(os.Getenv("HOME"), ".config")
+		homeDir = os.Getenv("HOME")
+		if homeDir == "" {
+			homeDir = os.Getenv("USERPROFILE")
+		}
 	}
-	dir := filepath.Join(configDir, "TalentLens")
+	dir := filepath.Join(homeDir, "Documents", "TalentLens")
 	os.MkdirAll(dir, 0755)
 	return dir
+}
+
+// GetDataDir 暴露数据目录路径给前端
+func (a *App) GetDataDir() string {
+	return a.getDataDir()
+}
+
+// OpenDataDir 用系统文件管理器打开数据目录
+func (a *App) OpenDataDir() {
+	dir := a.getDataDir()
+	runtime.BrowserOpenURL(a.ctx, dir)
 }
 
 func (a *App) getConfigPath() string {
@@ -552,6 +567,42 @@ func (a *App) GetProjectRanking(projectID string) []*Resume {
 		}
 	}
 	return resumes
+}
+
+// GetProjectStats 获取项目统计信息
+func (a *App) GetProjectStats(projectID string) map[string]interface{} {
+	resumes := a.GetProjectResumes(projectID)
+	total := len(resumes)
+	analyzed := 0
+	recommended := 0
+	totalScore := 0
+	maxScore := 0
+
+	for _, r := range resumes {
+		if r.Status == "done" {
+			analyzed++
+			totalScore += r.Score
+			if r.Score > maxScore {
+				maxScore = r.Score
+			}
+			if r.Analysis != nil && (r.Analysis.Recommendation == "strong_recommend" || r.Analysis.Recommendation == "recommend") {
+				recommended++
+			}
+		}
+	}
+
+	avgScore := 0
+	if analyzed > 0 {
+		avgScore = totalScore / analyzed
+	}
+
+	return map[string]interface{}{
+		"total":       total,
+		"analyzed":    analyzed,
+		"avgScore":    avgScore,
+		"maxScore":    maxScore,
+		"recommended": recommended,
+	}
 }
 
 // RegisterResumeToProject 注册简历到项目
@@ -929,7 +980,7 @@ func (a *App) AnalyzeResume(resumeID string, cfg *AIConfig, jobCfg *JobConfig) (
 		"progress": 100,
 	})
 	resume.Status = "done"
-	resume.Score = analysis.OverallScore
+	resume.Score = int(math.Round(analysis.OverallScore))
 	resume.Analysis = analysis
 	a.saveResume(&resume)
 
@@ -1197,11 +1248,11 @@ func (a *App) parseAnalysisResult(content string) (*AnalysisResult, error) {
 		return nil, fmt.Errorf("JSON解析失败: %v, 内容: %s", err, jsonStr[:min(200, len(jsonStr))])
 	}
 
-	// 验证并修正数据
-	result.OverallScore = clamp(result.OverallScore, 0, 100)
-	result.SkillMatch = clamp(result.SkillMatch, 0, 100)
-	result.ExperienceMatch = clamp(result.ExperienceMatch, 0, 100)
-	result.EducationMatch = clamp(result.EducationMatch, 0, 100)
+	// 验证并修正数据：四舍五入并限制在 0-100 范围
+	result.OverallScore = clampFloat(math.Round(result.OverallScore), 0, 100)
+	result.SkillMatch = clampFloat(math.Round(result.SkillMatch), 0, 100)
+	result.ExperienceMatch = clampFloat(math.Round(result.ExperienceMatch), 0, 100)
+	result.EducationMatch = clampFloat(math.Round(result.EducationMatch), 0, 100)
 
 	// 验证推荐等级
 	validRecs := map[string]bool{
@@ -1229,7 +1280,7 @@ func (a *App) parseAnalysisResult(content string) (*AnalysisResult, error) {
 	return &result, nil
 }
 
-func clamp(value, minVal, maxVal int) int {
+func clampFloat(value, minVal, maxVal float64) float64 {
 	if value < minVal {
 		return minVal
 	}
