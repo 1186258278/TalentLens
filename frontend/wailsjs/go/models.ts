@@ -28,9 +28,18 @@ export namespace main {
 	    experience_match: number;
 	    education_match: number;
 	    recommendation: string;
+	    skill_detail: string;
+	    experience_detail: string;
+	    education_detail: string;
+	    candidate_name: string;
+	    work_years: string;
+	    education: string;
+	    current_role: string;
 	    strengths: string[];
 	    weaknesses: string[];
+	    risks: string[];
 	    summary: string;
+	    interview_suggestions: string[];
 	    analyzed_at: string;
 	
 	    static createFrom(source: any = {}) {
@@ -44,9 +53,18 @@ export namespace main {
 	        this.experience_match = source["experience_match"];
 	        this.education_match = source["education_match"];
 	        this.recommendation = source["recommendation"];
+	        this.skill_detail = source["skill_detail"];
+	        this.experience_detail = source["experience_detail"];
+	        this.education_detail = source["education_detail"];
+	        this.candidate_name = source["candidate_name"];
+	        this.work_years = source["work_years"];
+	        this.education = source["education"];
+	        this.current_role = source["current_role"];
 	        this.strengths = source["strengths"];
 	        this.weaknesses = source["weaknesses"];
+	        this.risks = source["risks"];
 	        this.summary = source["summary"];
+	        this.interview_suggestions = source["interview_suggestions"];
 	        this.analyzed_at = source["analyzed_at"];
 	    }
 	}

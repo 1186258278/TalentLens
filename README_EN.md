@@ -67,13 +67,13 @@ Just download and run. No installation required.
 
 ## Supported AI Providers
 
-| Provider | Default Model | Notes |
-|----------|--------------|-------|
-| DeepSeek | deepseek-chat | Recommended, free quota for new users |
-| OpenAI | gpt-4o-mini | Most popular globally |
-| Zhipu AI | glm-4-flash | Chinese LLM |
-| Moonshot | moonshot-v1-8k | Chinese LLM |
-| SiliconFlow | Qwen/Qwen2.5-7B | Model aggregator |
+| Provider | Recommended Model | Notes |
+|----------|------------------|-------|
+| DeepSeek | DeepSeek-V3.2 | Recommended, excellent cost-performance ratio |
+| OpenAI | GPT-5 Mini | Latest GPT-5 family |
+| Zhipu AI | GLM-4.7-Flash | Chinese LLM, free tier available |
+| Moonshot (Kimi) | Kimi K2.5 | Latest multimodal agent model |
+| SiliconFlow | DeepSeek-V3.2 | Model aggregator, 100+ models |
 | Custom | - | Any OpenAI-compatible API |
 
 ---

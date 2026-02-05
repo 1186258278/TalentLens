@@ -92,6 +92,17 @@
 
               <!-- 分析结果 -->
               <div v-if="resumeStore.selectedResume.status === 'done' && resumeStore.selectedResume.analysis" class="analysis-result">
+                <!-- 候选人信息卡片 -->
+                <div v-if="resumeStore.selectedResume.analysis.candidateName" class="candidate-card">
+                  <div class="candidate-name">{{ resumeStore.selectedResume.analysis.candidateName }}</div>
+                  <div class="candidate-meta">
+                    <span v-if="resumeStore.selectedResume.analysis.currentRole">{{ resumeStore.selectedResume.analysis.currentRole }}</span>
+                    <span v-if="resumeStore.selectedResume.analysis.workYears">{{ resumeStore.selectedResume.analysis.workYears }}经验</span>
+                    <span v-if="resumeStore.selectedResume.analysis.education">{{ resumeStore.selectedResume.analysis.education }}</span>
+                  </div>
+                </div>
+
+                <!-- 评分面板 -->
                 <div class="score-section">
                   <div class="main-score" :class="getScoreClass(resumeStore.selectedResume.score)">
                     <span class="score-value" :key="resumeStore.selectedResume.id">{{ animatedDetailScore }}</span>
@@ -99,12 +110,12 @@
                   </div>
                   <div class="score-breakdown">
                     <div class="score-item">
-                      <span class="label">{{ $t('analysis.experienceMatch') }}</span>
-                      <el-progress :percentage="resumeStore.selectedResume.analysis.experienceMatch" :color="getProgressColor(resumeStore.selectedResume.analysis.experienceMatch)" />
-                    </div>
-                    <div class="score-item">
                       <span class="label">{{ $t('analysis.skillMatch') }}</span>
                       <el-progress :percentage="resumeStore.selectedResume.analysis.skillMatch" :color="getProgressColor(resumeStore.selectedResume.analysis.skillMatch)" />
+                    </div>
+                    <div class="score-item">
+                      <span class="label">{{ $t('analysis.experienceMatch') }}</span>
+                      <el-progress :percentage="resumeStore.selectedResume.analysis.experienceMatch" :color="getProgressColor(resumeStore.selectedResume.analysis.experienceMatch)" />
                     </div>
                     <div class="score-item">
                       <span class="label">{{ $t('analysis.educationMatch') }}</span>
@@ -113,12 +124,30 @@
                   </div>
                 </div>
 
+                <!-- 推荐结论 -->
                 <div class="recommendation-section">
                   <div class="recommendation-badge" :class="resumeStore.selectedResume.analysis.recommendation">
                     {{ $t(`analysis.recommendations.${resumeStore.selectedResume.analysis.recommendation}`) }}
                   </div>
                 </div>
 
+                <!-- 评分详解 -->
+                <div v-if="resumeStore.selectedResume.analysis.skillDetail" class="detail-cards">
+                  <div class="detail-card">
+                    <h4>{{ $t('analysis.skillMatch') }}详解</h4>
+                    <p>{{ resumeStore.selectedResume.analysis.skillDetail }}</p>
+                  </div>
+                  <div class="detail-card">
+                    <h4>{{ $t('analysis.experienceMatch') }}详解</h4>
+                    <p>{{ resumeStore.selectedResume.analysis.experienceDetail }}</p>
+                  </div>
+                  <div class="detail-card">
+                    <h4>{{ $t('analysis.educationMatch') }}详解</h4>
+                    <p>{{ resumeStore.selectedResume.analysis.educationDetail }}</p>
+                  </div>
+                </div>
+
+                <!-- 优势与不足 -->
                 <div class="strength-weakness">
                   <div class="sw-block strengths">
                     <h4><el-icon><CircleCheck /></el-icon> {{ $t('analysis.strengths') }}</h4>
@@ -134,6 +163,23 @@
                   </div>
                 </div>
 
+                <!-- 风险提示 -->
+                <div v-if="resumeStore.selectedResume.analysis.risks && resumeStore.selectedResume.analysis.risks.length > 0" class="risk-section">
+                  <h4><el-icon><Warning /></el-icon> 风险提示</h4>
+                  <ul>
+                    <li v-for="(item, idx) in resumeStore.selectedResume.analysis.risks" :key="idx">{{ item }}</li>
+                  </ul>
+                </div>
+
+                <!-- 面试建议 -->
+                <div v-if="resumeStore.selectedResume.analysis.interviewSuggestions && resumeStore.selectedResume.analysis.interviewSuggestions.length > 0" class="interview-section">
+                  <h4><el-icon><ChatLineSquare /></el-icon> 面试建议</h4>
+                  <ul>
+                    <li v-for="(item, idx) in resumeStore.selectedResume.analysis.interviewSuggestions" :key="idx">{{ item }}</li>
+                  </ul>
+                </div>
+
+                <!-- AI 总结 -->
                 <div class="summary-section">
                   <h4><el-icon><ChatLineSquare /></el-icon> {{ $t('analysis.summary') }}</h4>
                   <p>{{ resumeStore.selectedResume.analysis.summary }}</p>
@@ -637,6 +683,66 @@ onMounted(async () => {
       }
     }
 
+    // 候选人信息卡片
+    .candidate-card {
+      padding: 14px 18px;
+      background: linear-gradient(135deg, rgba(0,122,255,0.06), rgba(0,122,255,0.02));
+      border: 1px solid rgba(0,122,255,0.15);
+      border-radius: $radius-lg;
+      margin-bottom: 14px;
+
+      .candidate-name { font-size: 16px; font-weight: 700; color: $text-primary; margin-bottom: 6px; }
+      .candidate-meta {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        span {
+          font-size: 12px; color: $text-secondary;
+          padding: 2px 8px; background: rgba(0,0,0,0.04); border-radius: 4px;
+        }
+      }
+    }
+
+    // 评分详解
+    .detail-cards {
+      display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
+
+      .detail-card {
+        padding: 14px 16px;
+        background: $bg-primary;
+        border: 1px solid $separator;
+        border-radius: $radius-lg;
+
+        h4 { margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: $text-primary; }
+        p { margin: 0; font-size: 12px; color: $text-secondary; line-height: 1.7; }
+      }
+    }
+
+    // 风险提示
+    .risk-section {
+      padding: 14px 16px;
+      background: rgba(255, 149, 0, 0.04);
+      border: 1px solid rgba(255, 149, 0, 0.15);
+      border-radius: $radius-lg;
+      margin-bottom: 14px;
+
+      h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: $system-orange; }
+      ul { margin: 0; padding-left: 18px; }
+      li { font-size: 12px; color: $text-secondary; margin-bottom: 5px; line-height: 1.6; }
+    }
+
+    // 面试建议
+    .interview-section {
+      padding: 14px 16px;
+      background: rgba(0, 122, 255, 0.04);
+      border: 1px solid rgba(0, 122, 255, 0.12);
+      border-radius: $radius-lg;
+      margin-bottom: 14px;
+
+      h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: $system-blue; }
+      ul { margin: 0; padding-left: 18px; }
+      li { font-size: 12px; color: $text-secondary; margin-bottom: 5px; line-height: 1.6; }
+    }
+
+    // AI 总结
     .summary-section {
       padding: 16px;
       background: $bg-primary;
@@ -644,7 +750,7 @@ onMounted(async () => {
       border: 1px solid $separator;
 
       h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: $system-blue; }
-      p { margin: 0; font-size: 13px; color: $text-secondary; line-height: 1.6; }
+      p { margin: 0; font-size: 13px; color: $text-secondary; line-height: 1.7; }
     }
   }
 

@@ -67,13 +67,13 @@
 
 ## 支持的 AI 服务商
 
-| 服务商 | 默认模型 | 说明 |
+| 服务商 | 推荐模型 | 说明 |
 |--------|---------|------|
-| DeepSeek | deepseek-chat | 推荐，新用户有免费额度 |
-| OpenAI | gpt-4o-mini | 全球最流行 |
-| 智谱 AI | glm-4-flash | 国产大模型 |
-| Moonshot (月之暗面) | moonshot-v1-8k | 国产大模型 |
-| SiliconFlow | Qwen/Qwen2.5-7B | 模型聚合平台 |
+| DeepSeek | DeepSeek-V3.2 | 推荐，性价比高，支持对话/深度推理双模式 |
+| OpenAI | GPT-5 Mini | 全球最流行，GPT-5 系列最新 |
+| 智谱 AI | GLM-4.7-Flash | 国产旗舰，免费调用 |
+| Moonshot (Kimi) | Kimi K2.5 | 最新多模态智能体模型 |
+| 硅基流动 | DeepSeek-V3.2 | 模型聚合平台，100+ 模型一站调用 |
 | 自定义 | - | 任何 OpenAI 兼容接口 |
 
 ---

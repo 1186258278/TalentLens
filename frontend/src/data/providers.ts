@@ -1,4 +1,4 @@
-// AI 服务商预设数据
+// AI 服务商预设数据 (更新于 2026-02)
 export interface ProviderGuide {
   title: string
   steps: string[]
@@ -24,9 +24,8 @@ export const providers: Provider[] = [
     baseURL: 'https://api.deepseek.com',
     recommended: true,
     models: [
-      { id: 'deepseek-chat', name: 'DeepSeek Chat', recommended: true },
-      { id: 'deepseek-coder', name: 'DeepSeek Coder' },
-      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner (R1)' }
+      { id: 'deepseek-chat', name: 'DeepSeek-V3.2 (对话)', recommended: true },
+      { id: 'deepseek-reasoner', name: 'DeepSeek-V3.2 (深度推理)' }
     ],
     defaultModel: 'deepseek-chat',
     guide: {
@@ -47,12 +46,12 @@ export const providers: Provider[] = [
     name: 'OpenAI',
     baseURL: 'https://api.openai.com/v1',
     models: [
+      { id: 'gpt-5', name: 'GPT-5' },
+      { id: 'gpt-5-mini', name: 'GPT-5 Mini', recommended: true },
       { id: 'gpt-4o', name: 'GPT-4o' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', recommended: true },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' }
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
     ],
-    defaultModel: 'gpt-4o-mini',
+    defaultModel: 'gpt-5-mini',
     guide: {
       title: 'providers.openai.guideTitle',
       steps: [
@@ -71,12 +70,11 @@ export const providers: Provider[] = [
     name: '智谱 AI',
     baseURL: 'https://open.bigmodel.cn/api/paas/v4',
     models: [
-      { id: 'glm-4-plus', name: 'GLM-4 Plus' },
-      { id: 'glm-4-flash', name: 'GLM-4 Flash', recommended: true },
-      { id: 'glm-4', name: 'GLM-4' },
-      { id: 'glm-4-air', name: 'GLM-4 Air' }
+      { id: 'glm-4.7', name: 'GLM-4.7 (旗舰)', recommended: true },
+      { id: 'glm-4.7-flash', name: 'GLM-4.7-Flash (免费)' },
+      { id: 'glm-4.6v', name: 'GLM-4.6V (视觉)' }
     ],
-    defaultModel: 'glm-4-flash',
+    defaultModel: 'glm-4.7-flash',
     guide: {
       title: 'providers.zhipu.guideTitle',
       steps: [
@@ -92,14 +90,14 @@ export const providers: Provider[] = [
   },
   {
     id: 'moonshot',
-    name: 'Moonshot',
+    name: 'Moonshot (Kimi)',
     baseURL: 'https://api.moonshot.cn/v1',
     models: [
-      { id: 'moonshot-v1-8k', name: 'Moonshot V1 8K', recommended: true },
-      { id: 'moonshot-v1-32k', name: 'Moonshot V1 32K' },
-      { id: 'moonshot-v1-128k', name: 'Moonshot V1 128K' }
+      { id: 'kimi-k2.5', name: 'Kimi K2.5 (最新)', recommended: true },
+      { id: 'moonshot-v1-128k', name: 'Moonshot V1 128K' },
+      { id: 'moonshot-v1-32k', name: 'Moonshot V1 32K' }
     ],
-    defaultModel: 'moonshot-v1-8k',
+    defaultModel: 'kimi-k2.5',
     guide: {
       title: 'providers.moonshot.guideTitle',
       steps: [
@@ -118,12 +116,12 @@ export const providers: Provider[] = [
     name: '硅基流动',
     baseURL: 'https://api.siliconflow.cn/v1',
     models: [
-      { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen2.5-7B', recommended: true },
+      { id: 'deepseek-ai/DeepSeek-V3.2', name: 'DeepSeek-V3.2', recommended: true },
+      { id: 'THUDM/GLM-4.7', name: 'GLM-4.7' },
       { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5-72B' },
-      { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek-V3' },
-      { id: 'THUDM/glm-4-9b-chat', name: 'GLM-4-9B' }
+      { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek-R1 (推理)' }
     ],
-    defaultModel: 'Qwen/Qwen2.5-7B-Instruct',
+    defaultModel: 'deepseek-ai/DeepSeek-V3.2',
     guide: {
       title: 'providers.siliconflow.guideTitle',
       steps: [

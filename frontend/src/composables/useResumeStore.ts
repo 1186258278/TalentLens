@@ -43,10 +43,19 @@ export interface Resume {
     experienceMatch: number
     skillMatch: number
     educationMatch: number
+    skillDetail: string
+    experienceDetail: string
+    educationDetail: string
+    candidateName: string
+    workYears: string
+    education: string
+    currentRole: string
     summary: string
     strengths: string[]
     weaknesses: string[]
+    risks: string[]
     recommendation: string
+    interviewSuggestions: string[]
   }
   createdAt: string
   analyzedAt?: string
@@ -349,12 +358,21 @@ export const useResumeStore = defineStore('resume', () => {
         experienceMatch: expMatch,
         skillMatch: skillMatch,
         educationMatch: eduMatch,
+        skillDetail: '技能匹配分析详情 (Mock 模式)',
+        experienceDetail: '经验匹配分析详情 (Mock 模式)',
+        educationDetail: '学历匹配分析详情 (Mock 模式)',
+        candidateName: resume.fileName.replace(/\.[^/.]+$/, ''),
+        workYears: '3年',
+        education: '本科',
+        currentRole: '开发工程师',
         summary: `该候选人（${resume.fileName.replace(/\.[^/.]+$/, '')}）整体表现${resume.score >= 80 ? '优秀' : resume.score >= 70 ? '良好' : '一般'}。技能匹配度${skillMatch}%，工作经验匹配度${expMatch}%。${resume.score >= 75 ? '建议安排面试进一步了解。' : '可根据实际情况考虑是否进入下一轮。'}`,
         strengths: shuffledStrengths.slice(0, 2 + Math.floor(Math.random() * 2)),
         weaknesses: shuffledWeaknesses.slice(0, 1 + Math.floor(Math.random() * 2)),
+        risks: ['Mock 模式暂无风险分析'],
         recommendation: resume.score >= 85 ? 'strong_recommend' : 
                        resume.score >= 70 ? 'recommend' : 
-                       resume.score >= 55 ? 'consider' : 'not_recommend'
+                       resume.score >= 55 ? 'consider' : 'not_recommend',
+        interviewSuggestions: ['Mock 模式暂无面试建议']
       }
       resume.analyzedAt = new Date().toISOString()
     }
@@ -416,15 +434,25 @@ export const useResumeStore = defineStore('resume', () => {
       if (resume) {
         resume.status = 'done'
         resume.score = data.score
+        const a = data.analysis
         resume.analysis = {
-          overallScore: data.analysis.overall_score,
-          experienceMatch: data.analysis.experience_match,
-          skillMatch: data.analysis.skill_match,
-          educationMatch: data.analysis.education_match,
-          summary: data.analysis.summary,
-          strengths: data.analysis.strengths || [],
-          weaknesses: data.analysis.weaknesses || [],
-          recommendation: data.analysis.recommendation
+          overallScore: a.overall_score,
+          experienceMatch: a.experience_match,
+          skillMatch: a.skill_match,
+          educationMatch: a.education_match,
+          skillDetail: a.skill_detail || '',
+          experienceDetail: a.experience_detail || '',
+          educationDetail: a.education_detail || '',
+          candidateName: a.candidate_name || '',
+          workYears: a.work_years || '',
+          education: a.education || '',
+          currentRole: a.current_role || '',
+          summary: a.summary,
+          strengths: a.strengths || [],
+          weaknesses: a.weaknesses || [],
+          risks: a.risks || [],
+          recommendation: a.recommendation,
+          interviewSuggestions: a.interview_suggestions || []
         }
         resume.analyzedAt = data.analysis.analyzed_at
       }

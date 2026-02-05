@@ -65,15 +65,33 @@ type Resume struct {
 
 // AnalysisResult AI分析结果
 type AnalysisResult struct {
-	OverallScore     int      `json:"overall_score"`
-	SkillMatch       int      `json:"skill_match"`
-	ExperienceMatch  int      `json:"experience_match"`
-	EducationMatch   int      `json:"education_match"`
-	Recommendation   string   `json:"recommendation"`
-	Strengths        []string `json:"strengths"`
-	Weaknesses       []string `json:"weaknesses"`
-	Summary          string   `json:"summary"`
-	AnalyzedAt       string   `json:"analyzed_at"`
+	OverallScore    int    `json:"overall_score"`
+	SkillMatch      int    `json:"skill_match"`
+	ExperienceMatch int    `json:"experience_match"`
+	EducationMatch  int    `json:"education_match"`
+	Recommendation  string `json:"recommendation"`
+
+	// 详细分析维度
+	SkillDetail      string `json:"skill_detail"`
+	ExperienceDetail string `json:"experience_detail"`
+	EducationDetail  string `json:"education_detail"`
+
+	// 候选人信息提取
+	CandidateName string `json:"candidate_name"`
+	WorkYears     string `json:"work_years"`
+	Education     string `json:"education"`
+	CurrentRole   string `json:"current_role"`
+
+	// 详细评价
+	Strengths  []string `json:"strengths"`
+	Weaknesses []string `json:"weaknesses"`
+	Risks      []string `json:"risks"`
+	Summary    string   `json:"summary"`
+
+	// 面试建议
+	InterviewSuggestions []string `json:"interview_suggestions"`
+
+	AnalyzedAt string `json:"analyzed_at"`
 }
 
 // OpenAI API 请求/响应结构
@@ -583,49 +601,96 @@ func (a *App) buildAnalysisPrompt(resume *Resume, jobCfg *JobConfig) string {
 	skills := strings.Join(jobCfg.RequiredSkills, "、")
 	requirements := strings.Join(jobCfg.Requirements, "\n- ")
 
-	prompt := fmt.Sprintf("你是一位专业的HR招聘专家，请根据以下岗位要求分析这份简历。\n\n"+
-		"## 岗位信息\n"+
-		"- 岗位名称: %s\n"+
-		"- 工作年限要求: %d 年以上\n"+
-		"- 学历要求: %s\n"+
-		"- 必备技能: %s\n"+
-		"- 其他要求:\n- %s\n\n"+
-		"## 简历内容\n"+
-		"文件名: %s\n"+
-		"---\n%s\n---\n\n"+
-		"## 分析要求\n"+
-		"请严格按照以下JSON格式返回分析结果，不要包含其他内容：\n\n"+
-		"{\n"+
-		"  \"overall_score\": 85,\n"+
-		"  \"skill_match\": 90,\n"+
-		"  \"experience_match\": 80,\n"+
-		"  \"education_match\": 85,\n"+
-		"  \"recommendation\": \"strong_recommend\",\n"+
-		"  \"strengths\": [\"优势1\", \"优势2\", \"优势3\"],\n"+
-		"  \"weaknesses\": [\"不足1\", \"不足2\"],\n"+
-		"  \"summary\": \"一句话总结候选人与岗位的匹配情况\"\n"+
-		"}\n\n"+
-		"评分说明：\n"+
-		"- overall_score: 综合评分 (0-100)\n"+
-		"- skill_match: 技能匹配度 (0-100)\n"+
-		"- experience_match: 经验匹配度 (0-100)\n"+
-		"- education_match: 学历匹配度 (0-100)\n"+
-		"- recommendation: 推荐等级，只能是以下四种之一：\n"+
-		"  - \"strong_recommend\" (强烈推荐，85分以上)\n"+
-		"  - \"recommend\" (推荐，70-84分)\n"+
-		"  - \"consider\" (可以考虑，60-69分)\n"+
-		"  - \"not_recommend\" (不推荐，60分以下)\n\n"+
-		"请确保返回的是合法的JSON格式。",
+	systemPrompt := "你是一位拥有15年经验的资深人力资源专家和猎头顾问。你的专长是精准评估候选人与岗位的匹配度。\n" +
+		"你必须基于简历中的客观事实进行分析，不得凭空臆造简历中没有的信息。\n" +
+		"你的评分必须严谨且前后一致，遵循统一的评分标准。\n" +
+		"你的分析要全面、专业、有深度，就像撰写一份正式的候选人评估报告。"
+
+	userPrompt := fmt.Sprintf(
+		"## 招聘岗位信息\n"+
+			"- 岗位名称: %s\n"+
+			"- 最低工作年限: %d 年\n"+
+			"- 最低学历: %s\n"+
+			"- 核心必备技能: %s\n"+
+			"- 补充要求:\n- %s\n\n"+
+			"## 候选人简历\n"+
+			"文件名: %s\n"+
+			"```\n%s\n```\n\n"+
+			"## 分析任务\n\n"+
+			"请对这份简历进行全方位、深度的专业分析。\n\n"+
+			"### 评分标准（严格执行）\n\n"+
+			"**技能匹配度 (skill_match)**:\n"+
+			"- 90-100: 完全掌握所有核心技能，且有相关高级技能加分\n"+
+			"- 70-89: 掌握大部分核心技能，个别技能有欠缺\n"+
+			"- 50-69: 掌握部分核心技能，有较大技能差距\n"+
+			"- 0-49: 核心技能严重不足\n\n"+
+			"**经验匹配度 (experience_match)**:\n"+
+			"- 90-100: 工作年限超过要求，且有高度相关的项目经验\n"+
+			"- 70-89: 工作年限满足要求，有相关经验\n"+
+			"- 50-69: 工作年限略不足，或经验相关度不高\n"+
+			"- 0-49: 工作年限严重不足，或无相关经验\n\n"+
+			"**学历匹配度 (education_match)**:\n"+
+			"- 90-100: 学历超过要求，且专业高度对口\n"+
+			"- 70-89: 学历满足要求，专业相关\n"+
+			"- 50-69: 学历勉强满足，专业有一定偏差\n"+
+			"- 0-49: 学历不满足要求\n\n"+
+			"**综合评分 (overall_score)** = skill_match * 0.45 + experience_match * 0.35 + education_match * 0.20\n\n"+
+			"### 推荐等级（根据综合评分）\n"+
+			"- \"strong_recommend\": 综合分 >= 85，各单项均 >= 70\n"+
+			"- \"recommend\": 综合分 70-84\n"+
+			"- \"consider\": 综合分 55-69\n"+
+			"- \"not_recommend\": 综合分 < 55\n\n"+
+			"### 输出要求\n\n"+
+			"请严格按以下JSON格式输出，不要输出任何其他内容：\n\n"+
+			"```json\n"+
+			"{\n"+
+			"  \"candidate_name\": \"从简历中提取的姓名\",\n"+
+			"  \"work_years\": \"从简历中提取的工作年限，如 5年\",\n"+
+			"  \"education\": \"从简历中提取的最高学历和学校，如 本科-武汉大学-计算机科学\",\n"+
+			"  \"current_role\": \"从简历中提取的当前/最近职位，如 高级Go开发工程师@字节跳动\",\n"+
+			"  \"overall_score\": 78,\n"+
+			"  \"skill_match\": 82,\n"+
+			"  \"experience_match\": 75,\n"+
+			"  \"education_match\": 80,\n"+
+			"  \"skill_detail\": \"逐项说明每个核心技能的掌握情况，如：Go(精通，有3年生产经验)、MySQL(熟练，简历中有分库分表经验)、Redis(了解，未提及具体使用场景)\",\n"+
+			"  \"experience_detail\": \"详细分析工作经历与岗位的匹配程度，包括行业相关度、项目复杂度、职责范围等\",\n"+
+			"  \"education_detail\": \"分析学历背景、专业对口程度、是否有相关认证或培训\",\n"+
+			"  \"recommendation\": \"recommend\",\n"+
+			"  \"strengths\": [\n"+
+			"    \"具体的优势1（必须引用简历中的事实依据）\",\n"+
+			"    \"具体的优势2\",\n"+
+			"    \"具体的优势3\"\n"+
+			"  ],\n"+
+			"  \"weaknesses\": [\n"+
+			"    \"具体的不足1（必须基于岗位要求指出差距）\",\n"+
+			"    \"具体的不足2\"\n"+
+			"  ],\n"+
+			"  \"risks\": [\n"+
+			"    \"潜在风险或需关注事项，如频繁跳槽、职业路径不连贯等\"\n"+
+			"  ],\n"+
+			"  \"interview_suggestions\": [\n"+
+			"    \"如果进入面试环节，建议重点考察的问题或方向\"\n"+
+			"  ],\n"+
+			"  \"summary\": \"2-3句话全面总结该候选人：包括核心亮点、主要短板、综合判断。需要具体且专业，避免空泛表述。\"\n"+
+			"}\n"+
+			"```\n\n"+
+			"注意事项：\n"+
+			"1. 所有分析必须基于简历中的客观内容，不得编造简历中不存在的信息\n"+
+			"2. strengths 至少3条，weaknesses 至少2条，每条都要具体且有事实依据\n"+
+			"3. summary 不能笼统，要结合候选人的具体情况给出有价值的判断\n"+
+			"4. 如果简历信息不完整或模糊，请在分析中明确指出\n"+
+			"5. 确保返回合法的JSON格式",
 		jobCfg.Title,
 		jobCfg.ExperienceYears,
 		jobCfg.EducationLevel,
 		skills,
 		requirements,
 		resume.FileName,
-		a.truncateContent(resume.Content, 8000),
+		a.truncateContent(resume.Content, 10000),
 	)
 
-	return prompt
+	// 使用 system + user 消息格式
+	return systemPrompt + "\n\n---\n\n" + userPrompt
 }
 
 // truncateContent 截断过长内容
@@ -638,20 +703,28 @@ func (a *App) truncateContent(content string, maxLen int) string {
 
 // callAI 调用AI接口
 func (a *App) callAI(cfg *AIConfig, prompt string) (string, error) {
+	// 拆分 system prompt 和 user prompt
+	parts := strings.SplitN(prompt, "\n\n---\n\n", 2)
+	systemMsg := parts[0]
+	userMsg := prompt
+	if len(parts) == 2 {
+		userMsg = parts[1]
+	}
+
 	reqBody := ChatRequest{
 		Model: cfg.Model,
 		Messages: []ChatMessage{
 			{
 				Role:    "system",
-				Content: "你是一位专业的HR招聘专家，擅长分析简历与岗位的匹配度。请严格按照用户要求的JSON格式返回结果。",
+				Content: systemMsg,
 			},
 			{
 				Role:    "user",
-				Content: prompt,
+				Content: userMsg,
 			},
 		},
-		Temperature: 0.3,
-		MaxTokens:   2000,
+		Temperature: 0.2,
+		MaxTokens:   4000,
 	}
 
 	body, _ := json.Marshal(reqBody)
