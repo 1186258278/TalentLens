@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ledongthuc/pdf"
 	"github.com/xuri/excelize/v2"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -277,47 +278,71 @@ func (a *App) processFile(filePath string) {
 }
 
 func (a *App) extractText(filePath string) string {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return ""
-	}
-
 	ext := strings.ToLower(filepath.Ext(filePath))
 
 	switch ext {
 	case ".txt", ".md":
-		return string(data)
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return ""
+		}
+		return a.truncateContent(string(data), 50000)
 	case ".pdf":
-		return a.extractFromPDF(data)
+		content := a.extractFromPDF(filePath)
+		if content != "" {
+			return content
+		}
+		// PDF 库提取失败时回退到原始方式
+		log.Println("[extractText] PDF 库提取失败，回退到原始方式")
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return ""
+		}
+		return a.extractFromBytes(data)
 	default:
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return ""
+		}
 		return a.extractFromBytes(data)
 	}
 }
 
-func (a *App) extractFromPDF(data []byte) string {
-	content := string(data)
-	var lines []string
+// extractFromPDF 使用 ledongthuc/pdf 库提取 PDF 文本（支持中文）
+func (a *App) extractFromPDF(filePath string) string {
+	f, r, err := pdf.Open(filePath)
+	if err != nil {
+		log.Printf("[extractFromPDF] 打开 PDF 失败: %v", err)
+		return ""
+	}
+	defer f.Close()
 
-	for len(content) > 0 {
-		start := strings.Index(content, "(")
-		end := strings.Index(content, ")")
-		if start == -1 || end == -1 || end <= start {
-			break
-		}
-		text := content[start+1 : end]
-		clean := ""
-		for _, ch := range text {
-			if ch >= 32 && ch <= 126 {
-				clean += string(ch)
-			}
-		}
-		if len(clean) > 2 {
-			lines = append(lines, clean)
-		}
-		content = content[end+1:]
+	var buf bytes.Buffer
+	reader, err := r.GetPlainText()
+	if err != nil {
+		log.Printf("[extractFromPDF] 提取文本失败: %v", err)
+		return ""
+	}
+	buf.ReadFrom(reader)
+
+	content := strings.TrimSpace(buf.String())
+	if content == "" {
+		log.Printf("[extractFromPDF] PDF 提取结果为空: %s", filePath)
+		return ""
 	}
 
-	result := strings.Join(lines, "\n")
+	// 清理多余空白行
+	lines := strings.Split(content, "\n")
+	var cleaned []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			cleaned = append(cleaned, line)
+		}
+	}
+	result := strings.Join(cleaned, "\n")
+
+	log.Printf("[extractFromPDF] 提取成功: %s, 长度=%d 字符", filepath.Base(filePath), len(result))
 	if len(result) > 50000 {
 		result = result[:50000]
 	}

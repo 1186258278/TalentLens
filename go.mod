@@ -1,8 +1,9 @@
 module GoResumeReview
 
-go 1.24.0
+go 1.24.1
 
 require (
+	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 	github.com/wailsapp/wails/v2 v2.11.0
 	github.com/xuri/excelize/v2 v2.10.0
 )
