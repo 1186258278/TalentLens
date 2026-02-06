@@ -25,7 +25,7 @@ import (
 )
 
 // 版本信息
-const AppVersion = "1.1.0"
+const AppVersion = "1.1.1"
 const GitHubRepo = "1186258278/TalentLens"
 
 //go:embed all:frontend/dist
