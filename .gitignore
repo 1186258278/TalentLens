@@ -50,5 +50,12 @@ frontend/src/assets/fonts/
 .context.md
 CONTEXT.local.md
 
+# 内部开发文档（不提交，docs/index.html 官网除外）
+docs/design/
+docs/api/
+docs/guides/
+docs/DEVELOPMENT.md
+docs/README.md
+
 # Cursor / editor
 .cursor/

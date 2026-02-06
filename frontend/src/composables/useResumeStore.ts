@@ -233,34 +233,65 @@ export const useResumeStore = defineStore('resume', () => {
     selectedId.value = id
   }
 
-  // 重新分析
-  function reAnalyze(id: string) {
+  // 重新分析（需要 AI 配置，返回是否成功启动）
+  async function reAnalyze(id: string): Promise<boolean> {
     const resume = resumes.value.find(r => r.id === id)
-    if (resume) {
-      resume.status = 'pending'
-      resume.score = undefined
-      resume.analysis = undefined
+    if (!resume) return false
 
-      // 模拟分析过程
-      setTimeout(() => {
-        resume.status = 'analyzing'
-        setTimeout(() => {
-          resume.status = 'done'
-          resume.score = Math.floor(Math.random() * 30) + 70
-          resume.analysis = {
-            overallScore: resume.score,
-            experienceMatch: Math.floor(Math.random() * 20) + 80,
-            skillMatch: Math.floor(Math.random() * 25) + 75,
-            educationMatch: Math.floor(Math.random() * 15) + 85,
-            summary: 'AI分析完成',
-            strengths: ['技能匹配', '经验丰富'],
-            weaknesses: ['可提升空间'],
-            recommendation: 'recommend'
-          }
-          resume.analyzedAt = new Date().toISOString()
-        }, 2000)
-      }, 500)
+    // 检查 AI 配置
+    const aiConfig = getAIConfig()
+    if (!aiConfig || !aiConfig.api_key) {
+      devLog('error', '重新分析失败: 未配置 AI Key')
+      return false
     }
+
+    resume.status = 'pending'
+    resume.score = undefined
+    resume.analysis = undefined
+
+    // Wails 环境：调用后端分析
+    if (isWailsEnv && WailsApp) {
+      const jobConfig = getJobConfig()
+      try {
+        resume.status = 'analyzing'
+        devLog('info', `重新分析简历: ${resume.fileName}`)
+        await WailsApp.AnalyzeResume(id, aiConfig, jobConfig)
+        // 结果通过 analysis:completed 事件回调更新
+      } catch (err: any) {
+        devLog('error', `重新分析失败: ${err.message || err}`)
+        resume.status = 'error'
+      }
+      return true
+    }
+
+    // 非 Wails 环境 Mock（仅用于开发调试）
+    devLog('warn', '非 Wails 环境，使用 Mock 重新分析')
+    resume.status = 'analyzing'
+    setTimeout(() => {
+      resume.status = 'done'
+      resume.score = Math.floor(Math.random() * 30) + 70
+      resume.analysis = {
+        overallScore: resume.score,
+        experienceMatch: Math.floor(Math.random() * 20) + 80,
+        skillMatch: Math.floor(Math.random() * 25) + 75,
+        educationMatch: Math.floor(Math.random() * 15) + 85,
+        skillDetail: 'Mock 模式',
+        experienceDetail: 'Mock 模式',
+        educationDetail: 'Mock 模式',
+        candidateName: resume.fileName.replace(/\.[^/.]+$/, ''),
+        workYears: '3年',
+        education: '本科',
+        currentRole: '开发工程师',
+        summary: 'Mock 模式分析完成',
+        strengths: ['技能匹配', '经验丰富'],
+        weaknesses: ['可提升空间'],
+        risks: [],
+        recommendation: 'recommend',
+        interviewSuggestions: []
+      }
+      resume.analyzedAt = new Date().toISOString()
+    }, 1500)
+    return true
   }
 
   // 模拟的分析结果模板

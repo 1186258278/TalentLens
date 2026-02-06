@@ -666,6 +666,14 @@ func (a *App) ImportResumesToProject(projectID string, filePaths []string) (int,
 
 // StartProjectAnalysis 对项目中所有待分析的简历进行批量分析
 func (a *App) StartProjectAnalysis(projectID string, cfg *AIConfig) {
+	if cfg == nil || cfg.APIKey == "" {
+		log.Println("[StartProjectAnalysis] AI 未配置，终止")
+		runtime.EventsEmit(a.ctx, "analysis:error", map[string]interface{}{
+			"id":    "",
+			"error": "AI 未配置: 请先在设置中填写 API Key",
+		})
+		return
+	}
 	p := a.GetProject(projectID)
 	if p == nil {
 		return
@@ -910,6 +918,14 @@ func (a *App) TestAIConnection(cfg *AIConfig) (bool, string) {
 
 // AnalyzeResume 分析单个简历
 func (a *App) AnalyzeResume(resumeID string, cfg *AIConfig, jobCfg *JobConfig) (*AnalysisResult, error) {
+	// 校验 AI 配置
+	if cfg == nil || cfg.APIKey == "" {
+		return nil, fmt.Errorf("AI 未配置: 请先在设置中填写 API Key")
+	}
+	if cfg.BaseURL == "" {
+		return nil, fmt.Errorf("AI 未配置: 请先在设置中填写 Base URL")
+	}
+
 	// 读取简历
 	path := filepath.Join(a.getDataDir(), "resumes", resumeID+".json")
 	data, err := os.ReadFile(path)
@@ -996,6 +1012,14 @@ func (a *App) AnalyzeResume(resumeID string, cfg *AIConfig, jobCfg *JobConfig) (
 
 // StartBatchAnalysis 批量分析简历
 func (a *App) StartBatchAnalysis(resumeIDs []string, cfg *AIConfig, jobCfg *JobConfig) {
+	if cfg == nil || cfg.APIKey == "" {
+		log.Println("[StartBatchAnalysis] AI 未配置，终止")
+		runtime.EventsEmit(a.ctx, "analysis:error", map[string]interface{}{
+			"id":    "",
+			"error": "AI 未配置: 请先在设置中填写 API Key",
+		})
+		return
+	}
 	go func() {
 		total := len(resumeIDs)
 		for i, id := range resumeIDs {

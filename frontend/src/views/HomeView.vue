@@ -59,7 +59,7 @@
               :resume="resume"
               :selected="resumeStore.selectedId === resume.id"
               @click="resumeStore.selectResume(resume.id)"
-              @re-analyze="resumeStore.reAnalyze"
+              @re-analyze="handleReAnalyze"
               @delete="resumeStore.deleteResume"
             />
             <el-empty v-if="resumeStore.resumes.length === 0" :description="$t('home.dragHint')" />
@@ -376,6 +376,11 @@ function handleStartAnalysis() {
   if (pendingCount === 0) { ElMessage.warning(t('guide.noResumesToAnalyze')); return }
   if (!checkAIConfig()) { showConfigGuide.value = true; return }
   resumeStore.startAnalysis()
+}
+
+async function handleReAnalyze(id: string) {
+  if (!checkAIConfig()) { showConfigGuide.value = true; return }
+  await resumeStore.reAnalyze(id)
 }
 
 function handleClearAll() { resumeStore.clearAll() }
