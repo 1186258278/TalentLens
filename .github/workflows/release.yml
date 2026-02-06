@@ -25,6 +25,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [amd64, arm64]
     steps:
@@ -75,6 +76,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [amd64, arm64]
     steps:
@@ -127,10 +129,15 @@ jobs:
   # 构建 Linux 版本
   # ==========================================
   build-linux:
-    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
