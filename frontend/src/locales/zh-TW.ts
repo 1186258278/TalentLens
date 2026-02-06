@@ -249,6 +249,23 @@ export default {
     analysisStarted: '開始分析履歷...'
   },
 
+  about: {
+    title: '關於',
+    version: '目前版本',
+    checkUpdate: '檢查更新',
+    checking: '正在檢查...',
+    latestVersion: '已是最新版本',
+    newVersion: '發現新版本 v{version}',
+    noUpdate: '目前已是最新版本',
+    download: '前往下載',
+    updateError: '檢查更新失敗',
+    links: '相關連結',
+    github: 'GitHub 倉庫',
+    website: '產品官網',
+    company: '公司官網',
+    copyright: '武漢晴辰天下網路科技有限公司'
+  },
+
   project: {
     title: '招聘專案',
     create: '新建專案',

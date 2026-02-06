@@ -24,6 +24,10 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+// 版本信息
+const AppVersion = "1.1.0"
+const GitHubRepo = "1186258278/TalentLens"
+
 //go:embed all:frontend/dist
 var assets embed.FS
 
@@ -1463,4 +1467,93 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// ============================================
+// 版本检测与链接
+// ============================================
+
+// GetAppVersion 返回当前应用版本号
+func (a *App) GetAppVersion() string {
+	return AppVersion
+}
+
+// OpenURL 用系统浏览器打开链接
+func (a *App) OpenURL(url string) {
+	runtime.BrowserOpenURL(a.ctx, url)
+}
+
+// CheckForUpdate 检查 GitHub 是否有新版本
+func (a *App) CheckForUpdate() map[string]interface{} {
+	result := map[string]interface{}{
+		"hasUpdate":      false,
+		"currentVersion": AppVersion,
+		"latestVersion":  AppVersion,
+		"releaseURL":     "",
+		"error":          "",
+	}
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", GitHubRepo)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		result["error"] = fmt.Sprintf("网络错误: %v", err)
+		return result
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		result["error"] = fmt.Sprintf("GitHub API 返回 %d", resp.StatusCode)
+		return result
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	var release struct {
+		TagName string `json:"tag_name"`
+		HTMLURL string `json:"html_url"`
+		Name    string `json:"name"`
+	}
+	if err := json.Unmarshal(body, &release); err != nil {
+		result["error"] = "解析版本信息失败"
+		return result
+	}
+
+	latestVersion := strings.TrimPrefix(release.TagName, "v")
+	result["latestVersion"] = latestVersion
+	result["releaseURL"] = release.HTMLURL
+
+	if compareVersions(latestVersion, AppVersion) > 0 {
+		result["hasUpdate"] = true
+	}
+
+	log.Printf("[CheckForUpdate] 当前=%s, 最新=%s, 有更新=%v", AppVersion, latestVersion, result["hasUpdate"])
+	return result
+}
+
+// compareVersions 比较语义化版本号，返回 1(a>b), 0(a==b), -1(a<b)
+func compareVersions(a, b string) int {
+	partsA := strings.Split(a, ".")
+	partsB := strings.Split(b, ".")
+
+	maxLen := len(partsA)
+	if len(partsB) > maxLen {
+		maxLen = len(partsB)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		var numA, numB int
+		if i < len(partsA) {
+			fmt.Sscanf(partsA[i], "%d", &numA)
+		}
+		if i < len(partsB) {
+			fmt.Sscanf(partsB[i], "%d", &numB)
+		}
+		if numA > numB {
+			return 1
+		}
+		if numA < numB {
+			return -1
+		}
+	}
+	return 0
 }

@@ -249,6 +249,23 @@ export default {
     analysisStarted: '开始分析简历...'
   },
 
+  about: {
+    title: '关于',
+    version: '当前版本',
+    checkUpdate: '检查更新',
+    checking: '正在检查...',
+    latestVersion: '已是最新版本',
+    newVersion: '发现新版本 v{version}',
+    noUpdate: '当前已是最新版本',
+    download: '前往下载',
+    updateError: '检查更新失败',
+    links: '相关链接',
+    github: 'GitHub 仓库',
+    website: '产品官网',
+    company: '公司官网',
+    copyright: '武汉晴辰天下网络科技有限公司'
+  },
+
   project: {
     title: '招聘项目',
     create: '新建项目',

@@ -249,6 +249,23 @@ export default {
     analysisStarted: 'Starting resume analysis...'
   },
 
+  about: {
+    title: 'About',
+    version: 'Current Version',
+    checkUpdate: 'Check for Updates',
+    checking: 'Checking...',
+    latestVersion: 'Up to date',
+    newVersion: 'New version v{version} available',
+    noUpdate: 'You are using the latest version',
+    download: 'Download',
+    updateError: 'Failed to check for updates',
+    links: 'Links',
+    github: 'GitHub Repository',
+    website: 'Product Website',
+    company: 'Company Website',
+    copyright: 'Wuhan Qingchen Tianxia Network Technology Co., Ltd.'
+  },
+
   project: {
     title: 'Recruitment Projects',
     create: 'New Project',

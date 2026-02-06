@@ -195,6 +195,71 @@
             </div>
           </div>
         </section>
+
+        <!-- 关于 -->
+        <section v-show="activeTab === 'about'" class="content-section">
+          <div class="section-head">
+            <h2>{{ $t('about.title') }}</h2>
+          </div>
+
+          <!-- 版本信息 -->
+          <div class="form-card about-card">
+            <div class="about-logo">
+              <span class="logo-text">TalentLens</span>
+              <span class="version-tag">v{{ appVersion || '1.1.0' }}</span>
+            </div>
+            <p class="about-desc">AI-Powered Resume Screening Tool</p>
+
+            <div class="update-section">
+              <el-button @click="checkForUpdate" :loading="updateChecking" round>
+                {{ updateChecking ? $t('about.checking') : $t('about.checkUpdate') }}
+              </el-button>
+
+              <div v-if="updateResult" class="update-result">
+                <div v-if="updateResult.hasUpdate" class="update-available">
+                  <span class="update-badge">{{ $t('about.newVersion', { version: updateResult.latestVersion }) }}</span>
+                  <el-button type="primary" size="small" round @click="openLink(updateResult.releaseURL)">
+                    {{ $t('about.download') }}
+                  </el-button>
+                </div>
+                <div v-else-if="!updateResult.error" class="update-latest">
+                  {{ $t('about.noUpdate') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 链接 -->
+          <div class="form-card">
+            <div class="section-head" style="padding:0;margin-bottom:12px;">
+              <h3 style="font-size:14px;">{{ $t('about.links') }}</h3>
+            </div>
+            <div class="link-list">
+              <button class="link-item" @click="openLink('https://github.com/1186258278/TalentLens')">
+                <span class="link-icon">
+                  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                </span>
+                <span class="link-text">{{ $t('about.github') }}</span>
+                <el-icon class="link-arrow"><Link /></el-icon>
+              </button>
+              <button class="link-item" @click="openLink('https://talentlens.qt.cool')">
+                <span class="link-icon">🌐</span>
+                <span class="link-text">{{ $t('about.website') }}</span>
+                <el-icon class="link-arrow"><Link /></el-icon>
+              </button>
+              <button class="link-item" @click="openLink('https://qingchencloud.com')">
+                <span class="link-icon">🏢</span>
+                <span class="link-text">{{ $t('about.company') }}</span>
+                <el-icon class="link-arrow"><Link /></el-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- 版权 -->
+          <div class="copyright-text">
+            Copyright &copy; 2025 {{ $t('about.copyright') }}
+          </div>
+        </section>
       </main>
     </div>
   </div>
@@ -205,7 +270,7 @@ import { ref, reactive, computed, onMounted, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Connection, Briefcase, Setting, Refresh } from '@element-plus/icons-vue'
+import { Connection, Briefcase, Setting, Refresh, InfoFilled, Link } from '@element-plus/icons-vue'
 
 import TitleBar from '../components/TitleBar.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
@@ -225,8 +290,14 @@ const dataDir = ref('')
 const tabs = [
   { id: 'ai', label: 'settings.aiConfig', icon: markRaw(Connection) },
   { id: 'job', label: 'settings.jobRequirements', icon: markRaw(Briefcase) },
-  { id: 'analysis', label: 'settings.analysisSettings', icon: markRaw(Setting) }
+  { id: 'analysis', label: 'settings.analysisSettings', icon: markRaw(Setting) },
+  { id: 'about', label: 'about.title', icon: markRaw(InfoFilled) }
 ]
+
+// 版本检测状态
+const appVersion = ref('')
+const updateChecking = ref(false)
+const updateResult = ref<{ hasUpdate: boolean; latestVersion: string; releaseURL: string; error: string } | null>(null)
 
 const aiForm = reactive({
   provider: 'deepseek',
@@ -342,12 +413,45 @@ async function openDataDir() {
   } catch {}
 }
 
+async function checkForUpdate() {
+  updateChecking.value = true
+  updateResult.value = null
+  try {
+    const WailsApp = await import('../../wailsjs/go/main/App')
+    const result = await WailsApp.CheckForUpdate()
+    updateResult.value = result as any
+    if (result.error) {
+      ElMessage.warning(t('about.updateError') + ': ' + result.error)
+    } else if (result.hasUpdate) {
+      ElMessage.success(t('about.newVersion', { version: result.latestVersion }))
+    } else {
+      ElMessage.info(t('about.noUpdate'))
+    }
+  } catch {
+    ElMessage.error(t('about.updateError'))
+  } finally {
+    updateChecking.value = false
+  }
+}
+
+async function openLink(url: string) {
+  try {
+    const WailsApp = await import('../../wailsjs/go/main/App')
+    await WailsApp.OpenURL(url)
+  } catch {
+    window.open(url, '_blank')
+  }
+}
+
 onMounted(async () => {
-  // 加载数据目录路径
+  // 加载数据目录路径和版本号
   try {
     const WailsApp = await import('../../wailsjs/go/main/App')
     dataDir.value = await WailsApp.GetDataDir()
-  } catch {}
+    appVersion.value = await WailsApp.GetAppVersion()
+  } catch {
+    appVersion.value = '1.1.0'
+  }
 
   const saved = localStorage.getItem('goresume_settings')
   if (saved) {
@@ -679,5 +783,118 @@ onMounted(async () => {
     font-family: 'SF Mono', 'Menlo', monospace;
     word-break: break-all;
   }
+}
+
+// 关于页面
+.about-card {
+  text-align: center;
+  padding: 32px 20px !important;
+
+  .about-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      color: $text-primary;
+      letter-spacing: -0.5px;
+    }
+
+    .version-tag {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 12px;
+      background: $system-blue-light;
+      color: $system-blue;
+    }
+  }
+
+  .about-desc {
+    font-size: 13px;
+    color: $text-tertiary;
+    margin: 0 0 20px 0;
+  }
+
+  .update-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    .update-result {
+      .update-available {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .update-badge {
+          font-size: 13px;
+          font-weight: 600;
+          color: $system-green;
+          padding: 4px 14px;
+          background: rgba(52, 199, 89, 0.1);
+          border-radius: 16px;
+        }
+      }
+
+      .update-latest {
+        font-size: 13px;
+        color: $text-secondary;
+      }
+    }
+  }
+}
+
+.link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: $radius-md;
+    background: transparent;
+    cursor: pointer;
+    font-family: $font-family;
+    font-size: 13px;
+    color: $text-primary;
+    transition: background $transition-fast;
+    width: 100%;
+    text-align: left;
+
+    &:hover { background: $bg-hover; }
+
+    .link-icon {
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $text-secondary;
+    }
+
+    .link-text { flex: 1; }
+
+    .link-arrow {
+      font-size: 12px;
+      color: $text-tertiary;
+    }
+  }
+}
+
+.copyright-text {
+  text-align: center;
+  font-size: 11px;
+  color: $text-tertiary;
+  margin-top: 24px;
+  padding: 12px;
 }
 </style>
