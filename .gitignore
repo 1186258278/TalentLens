@@ -46,5 +46,9 @@ frontend/README.md
 frontend/src/assets/images/logo-universal.png
 frontend/src/assets/fonts/
 
+# AI 上下文记忆文档（跨会话持久化，不提交）
+.context.md
+CONTEXT.local.md
+
 # Cursor / editor
 .cursor/
