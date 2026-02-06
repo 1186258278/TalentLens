@@ -17,6 +17,8 @@ env:
   GO_VERSION: '1.24'
   NODE_VERSION: '18'
   APP_NAME: 'TalentLens'
+  # workflow_dispatch 用 inputs.tag，tag push 用 github.ref_name
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
   # ==========================================
@@ -58,7 +60,7 @@ jobs:
       - name: Package
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $version = "${{ env.RELEASE_TAG }}" -replace '^v', ''
           $artifact = "${{ env.APP_NAME }}-$version-windows-${{ matrix.arch }}.exe"
           Copy-Item "build/bin/${{ env.APP_NAME }}.exe" "build/bin/$artifact"
           echo "ARTIFACT=$artifact" >> $env:GITHUB_ENV
@@ -108,7 +110,7 @@ jobs:
 
       - name: Package as DMG/ZIP
         run: |
-          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
           cd build/bin
           if [ -d "${{ env.APP_NAME }}.app" ]; then
             zip -r "${{ env.APP_NAME }}-${version}-macos-${{ matrix.arch }}.zip" "${{ env.APP_NAME }}.app"
@@ -172,7 +174,7 @@ jobs:
 
       - name: Package
         run: |
-          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
           cd build/bin
           chmod +x "${{ env.APP_NAME }}" 2>/dev/null || true
           tar czf "${{ env.APP_NAME }}-${version}-linux-${{ matrix.arch }}.tar.gz" "${{ env.APP_NAME }}"
@@ -208,11 +210,10 @@ jobs:
           ls -lh release/
 
       - name: Generate release body
-        id: release_body
         run: |
-          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          cat > release_notes.md << 'NOTES_EOF'
-          ## TalentLens ${{ github.ref_name }}
+          version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
+          cat > release_notes.md << NOTES_EOF
+          ## TalentLens ${{ env.RELEASE_TAG }}
 
           AI 驱动的智能简历筛选工具 | AI-Powered Resume Screening Tool
 
@@ -220,18 +221,18 @@ jobs:
 
           | 平台 | 架构 | 文件 |
           |------|------|------|
-          | Windows | x64 | `TalentLens-${version}-windows-amd64.exe` |
-          | Windows | ARM64 | `TalentLens-${version}-windows-arm64.exe` |
-          | macOS | Intel | `TalentLens-${version}-macos-amd64.zip` |
-          | macOS | Apple Silicon | `TalentLens-${version}-macos-arm64.zip` |
-          | Linux | x64 | `TalentLens-${version}-linux-amd64.tar.gz` |
-          | Linux | ARM64 | `TalentLens-${version}-linux-arm64.tar.gz` |
+          | Windows | x64 | \`TalentLens-${version}-windows-amd64.exe\` |
+          | Windows | ARM64 | \`TalentLens-${version}-windows-arm64.exe\` |
+          | macOS | Intel | \`TalentLens-${version}-macos-amd64.zip\` |
+          | macOS | Apple Silicon | \`TalentLens-${version}-macos-arm64.zip\` |
+          | Linux | x64 | \`TalentLens-${version}-linux-amd64.tar.gz\` |
+          | Linux | ARM64 | \`TalentLens-${version}-linux-arm64.tar.gz\` |
 
           ### 使用说明
 
-          - **Windows**: 下载 `.exe` 文件，双击运行
-          - **macOS**: 下载 `.zip` 解压后拖入 Applications
-          - **Linux**: 下载 `.tar.gz` 解压后运行
+          - **Windows**: 下载 \`.exe\` 文件，双击运行
+          - **macOS**: 下载 \`.zip\` 解压后拖入 Applications
+          - **Linux**: 下载 \`.tar.gz\` 解压后运行
 
           ---
 
@@ -242,7 +243,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "TalentLens ${{ github.ref_name }}"
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "TalentLens ${{ env.RELEASE_TAG }}"
           body_path: release_notes.md
           draft: false
           prerelease: false
