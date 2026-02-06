@@ -8,8 +8,7 @@ bin/
 node_modules/
 frontend/dist/
 
-# Dependencies
-go.sum
+# Dependencies (go.sum is kept for reproducible builds)
 
 # Environment & secrets
 .env
