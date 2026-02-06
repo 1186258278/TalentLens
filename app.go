@@ -134,8 +134,9 @@ type ChatResponse struct {
 }
 
 type App struct {
-	ctx    context.Context
-	config Config
+	ctx             context.Context
+	config          Config
+	activeProjectID string // 当前活跃的项目ID（前端设置）
 }
 
 func NewApp() *App {
@@ -188,15 +189,93 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.loadConfig()
 
-	// 监听文件拖拽
+	// 监听原生文件拖拽（Wails 提供真实文件路径）
 	runtime.OnFileDrop(ctx, func(x, y int, paths []string) {
-		log.Printf("收到文件: %d个", len(paths))
-		for _, path := range paths {
-			a.processFile(path)
+		log.Printf("[OnFileDrop] 收到 %d 个文件, 项目=%s", len(paths), a.activeProjectID)
+		supportedExts := map[string]bool{
+			".pdf": true, ".docx": true, ".doc": true,
+			".jpg": true, ".jpeg": true, ".png": true, ".bmp": true, ".gif": true, ".webp": true,
 		}
+		added := 0
+		for _, fp := range paths {
+			ext := strings.ToLower(filepath.Ext(fp))
+			if !supportedExts[ext] {
+				continue
+			}
+			info, err := os.Stat(fp)
+			if err != nil {
+				continue
+			}
+			id := fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(fp))
+
+			if a.activeProjectID != "" {
+				a.RegisterResumeToProject(a.activeProjectID, id, filepath.Base(fp), fp, ext, info.Size())
+			} else {
+				a.RegisterResume(id, filepath.Base(fp), fp, ext, info.Size())
+			}
+
+			// 通知前端（包含提取的内容）
+			resumePath := filepath.Join(a.getDataDir(), "resumes", id+".json")
+			data, _ := os.ReadFile(resumePath)
+			var resume Resume
+			json.Unmarshal(data, &resume)
+			runtime.EventsEmit(a.ctx, "resume:dropped", &resume)
+			added++
+		}
+		log.Printf("[OnFileDrop] 成功添加 %d 个文件", added)
 	})
 
 	log.Println("TalentLens 已启动")
+}
+
+// SetActiveProject 前端告知后端当前活跃项目
+func (a *App) SetActiveProject(projectID string) {
+	a.activeProjectID = projectID
+	log.Printf("[SetActiveProject] 当前项目: %s", projectID)
+}
+
+// SelectResumeFiles 打开原生文件选择对话框，返回添加数量
+func (a *App) SelectResumeFiles(projectID string) int {
+	files, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择简历文件",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "简历文件 (PDF/Word/图片)", Pattern: "*.pdf;*.docx;*.doc;*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp"},
+			{DisplayName: "PDF 文件", Pattern: "*.pdf"},
+			{DisplayName: "Word 文件", Pattern: "*.docx;*.doc"},
+			{DisplayName: "图片文件", Pattern: "*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp"},
+			{DisplayName: "所有文件", Pattern: "*.*"},
+		},
+	})
+	if err != nil || len(files) == 0 {
+		return 0
+	}
+
+	count := 0
+	for _, fp := range files {
+		info, err := os.Stat(fp)
+		if err != nil {
+			continue
+		}
+		ext := strings.ToLower(filepath.Ext(fp))
+		id := fmt.Sprintf("%d_%s", time.Now().UnixNano(), filepath.Base(fp))
+
+		if projectID != "" {
+			a.RegisterResumeToProject(projectID, id, filepath.Base(fp), fp, ext, info.Size())
+		} else {
+			a.RegisterResume(id, filepath.Base(fp), fp, ext, info.Size())
+		}
+
+		// 通知前端
+		resumePath := filepath.Join(a.getDataDir(), "resumes", id+".json")
+		data, _ := os.ReadFile(resumePath)
+		var resume Resume
+		json.Unmarshal(data, &resume)
+		runtime.EventsEmit(a.ctx, "resume:dropped", &resume)
+		count++
+	}
+
+	log.Printf("[SelectResumeFiles] 选择了 %d 个文件", count)
+	return count
 }
 
 // getDataDir 获取固定数据存储目录

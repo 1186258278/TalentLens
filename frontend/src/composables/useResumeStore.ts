@@ -523,6 +523,24 @@ export const useResumeStore = defineStore('resume', () => {
     }
   }
 
+  // 从后端数据构建简历并添加到列表
+  function addResumeFromBackend(data: any) {
+    const newResume: Resume = {
+      id: data.id,
+      fileName: data.file_name,
+      filePath: data.file_path,
+      fileType: data.file_type,
+      fileSize: data.file_size,
+      content: data.content,
+      status: (data.status as Resume['status']) || 'pending',
+      score: data.score,
+      createdAt: data.created_at
+    }
+    if (!resumes.value.some(r => r.id === newResume.id)) {
+      resumes.value.unshift(newResume)
+    }
+  }
+
   // 初始化 Wails 事件监听
   async function initWailsEvents() {
     await loadWailsBindings()
@@ -532,24 +550,16 @@ export const useResumeStore = defineStore('resume', () => {
       return
     }
 
-    // 监听简历添加事件
+    // 监听简历添加事件（后端 processFile 或 OnFileDrop）
     WailsRuntime.EventsOn('resume:added', (data: any) => {
       devLog('info', `收到后端简历添加事件: ${data.file_name}`)
-      const newResume: Resume = {
-        id: data.id,
-        fileName: data.file_name,
-        filePath: data.file_path,
-        fileType: data.file_type,
-        fileSize: data.file_size,
-        content: data.content,
-        status: data.status as Resume['status'],
-        score: data.score,
-        createdAt: data.created_at
-      }
-      // 检查是否已存在
-      if (!resumes.value.some(r => r.id === newResume.id)) {
-        resumes.value.unshift(newResume)
-      }
+      addResumeFromBackend(data)
+    })
+
+    // 监听原生拖拽/文件选择添加事件
+    WailsRuntime.EventsOn('resume:dropped', (data: any) => {
+      devLog('info', `收到原生文件事件: ${data.file_name}, 内容长度=${(data.content || '').length}`)
+      addResumeFromBackend(data)
     })
 
     // 监听分析进度事件（含进度百分比）

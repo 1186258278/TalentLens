@@ -8,15 +8,6 @@
     @drop.prevent="handleDrop"
     @click="handleClick"
   >
-    <input
-      ref="fileInput"
-      type="file"
-      multiple
-      accept=".pdf,.docx,.doc,.jpg,.jpeg,.png,.bmp,.gif,.webp"
-      @change="handleFileSelect"
-      hidden
-    />
-
     <div class="drop-content">
       <el-icon class="drop-icon"><UploadFilled /></el-icon>
       <p class="drop-text">{{ dropText }}</p>
@@ -43,9 +34,9 @@ export interface FileInfo {
 
 const emit = defineEmits<{
   (e: 'files-added', files: FileInfo[]): void
+  (e: 'select-files'): void
 }>()
 
-const fileInput = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)
 const dragCounter = ref(0)
 
@@ -56,92 +47,34 @@ const dropText = computed(() => {
 
 const dropHint = computed(() => t('home.supportedFormats'))
 
-// 支持的文件扩展名
-const supportedExtensions = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png', '.bmp', '.gif', '.webp']
-
-// 检查文件是否支持
-function isFileSupported(file: File): boolean {
-  const ext = '.' + file.name.split('.').pop()?.toLowerCase()
-  return supportedExtensions.includes(ext)
-}
-
-// 从 File 对象提取文件信息
-function extractFileInfo(file: File): FileInfo {
-  // Wails/Electron 环境下 File 对象可能有 path 属性
-  const filePath = (file as any).path || file.name
-  return {
-    name: file.name,
-    path: filePath,
-    size: file.size,
-    type: file.type,
-    lastModified: file.lastModified
-  }
-}
-
-// 处理拖拽进入
+// 拖拽视觉反馈（不在此处理文件，由 Wails OnFileDrop 原生处理）
 function handleDragEnter(e: DragEvent) {
   e.preventDefault()
   dragCounter.value++
-  if (dragCounter.value > 0) {
-    isDragging.value = true
-  }
+  if (dragCounter.value > 0) isDragging.value = true
 }
 
-// 处理拖拽离开
 function handleDragLeave(e: DragEvent) {
   e.preventDefault()
   dragCounter.value--
-  if (dragCounter.value === 0) {
-    isDragging.value = false
-  }
+  if (dragCounter.value === 0) isDragging.value = false
 }
 
-// 处理拖拽经过
 function handleDragOver(e: DragEvent) {
   e.preventDefault()
 }
 
-// 处理释放文件
+// 拖拽释放 — 仅视觉恢复，文件由 Wails 原生 OnFileDrop 处理（能拿到真实路径）
 function handleDrop(e: DragEvent) {
   e.preventDefault()
   dragCounter.value = 0
   isDragging.value = false
-
-  const files = e.dataTransfer?.files
-  if (files && files.length > 0) {
-    const validFiles = Array.from(files)
-      .filter(isFileSupported)
-      .map(extractFileInfo)
-    
-    console.log('拖放的文件:', validFiles)
-    
-    if (validFiles.length > 0) {
-      emit('files-added', validFiles)
-    }
-  }
+  // 不在这里处理文件！Wails OnFileDrop 会用真实路径处理
 }
 
-// 处理点击选择文件
+// 点击选择 → 告诉父组件调用原生文件对话框
 function handleClick() {
-  fileInput.value?.click()
-}
-
-// 处理文件选择
-function handleFileSelect(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (input.files && input.files.length > 0) {
-    const validFiles = Array.from(input.files)
-      .filter(isFileSupported)
-      .map(extractFileInfo)
-    
-    console.log('选择的文件:', validFiles)
-    
-    if (validFiles.length > 0) {
-      emit('files-added', validFiles)
-    }
-    // 清空input，允许重复选择同一文件
-    input.value = ''
-  }
+  emit('select-files')
 }
 </script>
 

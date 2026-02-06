@@ -32,7 +32,7 @@
     <main class="app-main">
       <!-- 左侧面板 -->
       <aside class="left-panel">
-        <DropZone @files-added="handleFilesAdded" />
+        <DropZone @select-files="handleSelectFiles" />
 
         <div class="resume-section">
           <div class="section-bar">
@@ -316,7 +316,7 @@ import ResumeCard from '../components/ResumeCard.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import AIConfigGuide from '../components/AIConfigGuide.vue'
 import DevPanel from '../components/DevPanel.vue'
-import { useResumeStore, type FileInfo } from '../composables/useResumeStore'
+import { useResumeStore } from '../composables/useResumeStore'
 import { useProjectStore } from '../composables/useProjectStore'
 
 const { t } = useI18n()
@@ -423,8 +423,17 @@ function loadJobTitle() {
   }
 }
 
-function handleFilesAdded(files: FileInfo[]) {
-  resumeStore.addResumes(files, projectId.value)
+// 点击选择文件 → 调用 Wails 原生文件对话框
+async function handleSelectFiles() {
+  try {
+    const WailsApp = await import('../../wailsjs/go/main/App')
+    const count = await WailsApp.SelectResumeFiles(projectId.value || '')
+    if (count > 0) {
+      ElMessage.success(t('guide.analysisStarted').replace('...', `: ${count} 份`))
+    }
+  } catch (err: any) {
+    console.error('选择文件失败:', err)
+  }
 }
 
 function handleStartAnalysis() {
@@ -502,6 +511,12 @@ onMounted(async () => {
   loadJobTitle()
   await resumeStore.initWailsEvents()
   
+  // 通知后端当前活跃项目（用于原生拖拽时关联项目）
+  try {
+    const WailsApp = await import('../../wailsjs/go/main/App')
+    await WailsApp.SetActiveProject(projectId.value || '')
+  } catch {}
+
   // 如果有项目上下文，加载项目信息和岗位
   if (projectId.value) {
     projectStore.currentProjectId = projectId.value
