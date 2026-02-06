@@ -421,15 +421,21 @@ async function checkForUpdate() {
     const WailsApp = await import('../../wailsjs/go/main/App')
     const result = await WailsApp.CheckForUpdate()
     updateResult.value = result as any
-    if (result.error) {
-      ElMessage.warning(t('about.updateError') + ': ' + result.error)
+    if (result.error || (!result.hasUpdate && !result.latestVersion)) {
+      // API 失败，直接打开 GitHub Releases 页面让用户自己看
+      await WailsApp.OpenURL('https://github.com/1186258278/TalentLens/releases')
+      ElMessage.info(t('about.checkUpdate') + ' - ' + t('about.website'))
     } else if (result.hasUpdate) {
       ElMessage.success(t('about.newVersion', { version: result.latestVersion }))
     } else {
       ElMessage.info(t('about.noUpdate'))
     }
   } catch {
-    ElMessage.error(t('about.updateError'))
+    // 彻底失败也直接开浏览器
+    try {
+      const WailsApp = await import('../../wailsjs/go/main/App')
+      await WailsApp.OpenURL('https://github.com/1186258278/TalentLens/releases')
+    } catch {}
   } finally {
     updateChecking.value = false
   }
