@@ -216,14 +216,22 @@ export const useResumeStore = defineStore('resume', () => {
     }
   }
 
-  // 删除简历
-  function deleteResume(id: string) {
+  // 删除简历（前端 + 后端同步删除）
+  async function deleteResume(id: string) {
     const index = resumes.value.findIndex(r => r.id === id)
     if (index !== -1) {
       resumes.value.splice(index, 1)
-      // 如果删除的是当前选中的，清除选中状态
       if (selectedId.value === id) {
         selectedId.value = null
+      }
+    }
+    // 同步删除后端磁盘文件
+    if (isWailsEnv && WailsApp) {
+      try {
+        await WailsApp.DeleteResume(id)
+        devLog('info', `后端已删除简历: ${id}`)
+      } catch (err: any) {
+        devLog('error', `后端删除失败: ${err.message || err}`)
       }
     }
   }
@@ -500,10 +508,19 @@ export const useResumeStore = defineStore('resume', () => {
     return true
   }
 
-  // 清空所有简历
-  function clearAll() {
+  // 清空所有简历（前端 + 后端同步清空）
+  async function clearAll() {
     resumes.value = []
     selectedId.value = null
+    // 同步清空后端磁盘
+    if (isWailsEnv && WailsApp) {
+      try {
+        await WailsApp.ClearResumes()
+        devLog('info', '后端已清空所有简历')
+      } catch (err: any) {
+        devLog('error', `后端清空失败: ${err.message || err}`)
+      }
+    }
   }
 
   // 初始化 Wails 事件监听

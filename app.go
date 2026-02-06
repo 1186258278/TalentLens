@@ -963,6 +963,18 @@ func (a *App) AnalyzeResume(resumeID string, cfg *AIConfig, jobCfg *JobConfig) (
 		return nil, fmt.Errorf("解析简历失败: %v", err)
 	}
 
+	// 每次分析前重新提取文件内容（避免使用旧解析器缓存的错误内容）
+	if resume.FilePath != "" && resume.FilePath != resume.FileName {
+		freshContent := a.extractText(resume.FilePath)
+		if freshContent != "" && len(freshContent) > 20 {
+			log.Printf("[AnalyzeResume] 重新提取内容: %s, 长度=%d", resume.FileName, len(freshContent))
+			resume.Content = freshContent
+			a.saveResume(&resume) // 更新磁盘缓存
+		} else {
+			log.Printf("[AnalyzeResume] 重新提取失败或内容过短，使用已有内容")
+		}
+	}
+
 	// 更新状态为分析中
 	resume.Status = "analyzing"
 	a.saveResume(&resume)
