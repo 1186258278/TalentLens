@@ -57,23 +57,20 @@
       <div class="card-footer">
         <span class="file-type">{{ fileTypeText }}</span>
         <div class="card-actions">
-          <el-button
-            v-if="resume.status === 'done'"
-            type="primary"
-            link
-            size="small"
+          <button
+            v-if="resume.status === 'done' || resume.status === 'error'"
+            class="action-btn reanalyze-btn"
             @click.stop="$emit('re-analyze', resume.id)"
           >
+            <el-icon><RefreshRight /></el-icon>
             {{ $t('analysis.reAnalyze') }}
-          </el-button>
-          <el-button
-            type="danger"
-            link
-            size="small"
+          </button>
+          <button
+            class="action-btn delete-btn"
             @click.stop="$emit('delete', resume.id)"
           >
             {{ $t('common.delete') }}
-          </el-button>
+          </button>
         </div>
       </div>
     </div>
@@ -87,7 +84,8 @@ import {
   Document,
   Loading,
   CircleClose,
-  Clock
+  Clock,
+  RefreshRight
 } from '@element-plus/icons-vue'
 import type { Resume } from '../composables/useResumeStore'
 
@@ -562,23 +560,43 @@ $radius-md: 10px;
 
     .card-actions {
       display: flex;
-      gap: 6px;
+      align-items: center;
+      gap: 10px;
 
-      :deep(.el-button) {
+      .action-btn {
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 12px;
         font-weight: 500;
+        font-family: inherit;
         transition: all 0.2s ease;
+        border-radius: 4px;
+        padding: 3px 8px;
+      }
+
+      .reanalyze-btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: $primary;
+        background: rgba(30, 58, 95, 0.06);
+        border: 1px solid rgba(30, 58, 95, 0.15);
+
+        .el-icon { font-size: 13px; }
 
         &:hover {
-          transform: scale(1.05);
+          background: rgba(30, 58, 95, 0.12);
+          border-color: $primary-light;
         }
+        &:active { transform: scale(0.96); }
       }
 
-      :deep(.el-button--primary) {
-        color: $primary;
-      }
-
-      :deep(.el-button--danger) {
+      .delete-btn {
         color: $error;
+
+        &:hover { background: $error-light; }
+        &:active { transform: scale(0.96); }
       }
     }
   }

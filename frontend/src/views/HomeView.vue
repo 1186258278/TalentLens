@@ -402,9 +402,14 @@ async function handleExport() {
     return
   }
   try {
-    const path = await projectStore.exportReport(projectId.value)
-    if (path) {
-      ElMessage.success(t('project.exportSuccess'))
+    const filePath = await projectStore.exportReport(projectId.value)
+    if (filePath) {
+      ElMessage.success(t('project.exportSuccess') + '：' + filePath)
+      // 自动打开导出目录
+      try {
+        const WailsApp = await import('../../wailsjs/go/main/App')
+        await WailsApp.OpenExportDir()
+      } catch {}
     } else {
       ElMessage.error(t('project.exportFailed'))
     }
