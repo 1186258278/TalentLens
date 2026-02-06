@@ -46,7 +46,23 @@
                 <el-icon v-else class="spin"><Loading /></el-icon>
                 {{ $t('home.startAnalysis') }}
               </button>
-              <button class="action-btn" @click="handleClearAll">
+              <button
+                class="action-btn"
+                @click="handleReAnalyzeAll"
+                :disabled="resumeStore.isAnalyzing || resumeStore.doneCount === 0"
+                :title="$t('home.reAnalyzeAll')"
+              >
+                <el-icon><RefreshRight /></el-icon>
+              </button>
+              <button
+                class="action-btn"
+                @click="handleExport"
+                :disabled="resumeStore.doneCount === 0"
+                :title="$t('home.exportReport')"
+              >
+                <el-icon><Download /></el-icon>
+              </button>
+              <button class="action-btn" @click="handleClearAll" :title="$t('home.clear')">
                 <el-icon><Delete /></el-icon>
               </button>
             </div>
@@ -264,7 +280,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   Setting, Briefcase, Document, VideoPlay, Delete, View,
-  CircleCheck, Warning, ChatLineSquare, Clock, Loading, CircleClose
+  CircleCheck, Warning, ChatLineSquare, Clock, Loading, CircleClose,
+  RefreshRight, Download
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import TitleBar from '../components/TitleBar.vue'
@@ -348,11 +365,22 @@ const rankedResumes = computed(() => {
 
 // 导出报告
 async function handleExport() {
-  if (!projectId.value) { ElMessage.warning('请先选择项目'); return }
-  const path = await projectStore.exportReport(projectId.value)
-  if (path) {
-    ElMessage.success(t('project.exportSuccess'))
-  } else {
+  if (!projectId.value) {
+    ElMessage.warning(t('project.exportFailed') + ' - ' + t('project.createFirst'))
+    return
+  }
+  if (resumeStore.doneCount === 0) {
+    ElMessage.warning(t('home.noAnalyzedResumes'))
+    return
+  }
+  try {
+    const path = await projectStore.exportReport(projectId.value)
+    if (path) {
+      ElMessage.success(t('project.exportSuccess'))
+    } else {
+      ElMessage.error(t('project.exportFailed'))
+    }
+  } catch {
     ElMessage.error(t('project.exportFailed'))
   }
 }
@@ -381,6 +409,13 @@ function handleStartAnalysis() {
 async function handleReAnalyze(id: string) {
   if (!checkAIConfig()) { showConfigGuide.value = true; return }
   await resumeStore.reAnalyze(id)
+}
+
+async function handleReAnalyzeAll() {
+  if (resumeStore.doneCount === 0) { ElMessage.warning(t('home.noAnalyzedResumes')); return }
+  if (!checkAIConfig()) { showConfigGuide.value = true; return }
+  const ok = await resumeStore.reAnalyzeAll()
+  if (!ok) { ElMessage.warning(t('home.noAnalyzedResumes')) }
 }
 
 function handleClearAll() { resumeStore.clearAll() }

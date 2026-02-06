@@ -467,6 +467,39 @@ export const useResumeStore = defineStore('resume', () => {
     batchProgress.value = { current: 0, total: 0, currentResumeId: null }
   }
 
+  // 批量重新分析所有简历（将 done/error 状态重置为 pending，然后启动分析）
+  async function reAnalyzeAll(): Promise<boolean> {
+    if (isAnalyzing.value) return false
+
+    const aiConfig = getAIConfig()
+    if (!aiConfig || !aiConfig.api_key) {
+      devLog('error', '批量重分析失败: 未配置 AI Key')
+      return false
+    }
+
+    // 将所有 done/error 简历重置为 pending
+    let resetCount = 0
+    for (const resume of resumes.value) {
+      if (resume.status === 'done' || resume.status === 'error') {
+        resume.status = 'pending'
+        resume.score = undefined
+        resume.analysis = undefined
+        resetCount++
+      }
+    }
+
+    if (resetCount === 0) {
+      devLog('warn', '没有需要重新分析的简历')
+      return false
+    }
+
+    devLog('info', `已重置 ${resetCount} 份简历，准备重新分析`)
+
+    // 启动分析（startAnalysis 会处理所有 pending 简历）
+    await startAnalysis()
+    return true
+  }
+
   // 清空所有简历
   function clearAll() {
     resumes.value = []
@@ -594,6 +627,7 @@ export const useResumeStore = defineStore('resume', () => {
     deleteResume,
     selectResume,
     reAnalyze,
+    reAnalyzeAll,
     startAnalysis,
     clearAll,
     initWailsEvents,
