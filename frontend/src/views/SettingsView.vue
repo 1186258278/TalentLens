@@ -587,10 +587,13 @@ onMounted(async () => {
   overflow-y: auto;
   padding: 28px 36px;
   background: $bg-secondary;
+  display: flex;
+  justify-content: center;
 }
 
 .content-section {
-  max-width: 600px;
+  width: 100%;
+  max-width: 640px;
   animation: fadeSlide 0.25s ease;
 }
 
@@ -789,15 +792,14 @@ onMounted(async () => {
 // 关于页面
 .about-section {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .about-center {
-  max-width: 420px;
+  max-width: 460px;
   width: 100%;
-  margin: 0 auto;
-  padding-top: 20px;
+  padding-top: 10px;
 }
 
 .about-hero {
