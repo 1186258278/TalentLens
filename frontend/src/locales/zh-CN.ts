@@ -28,6 +28,11 @@ export default {
   home: {
     resumeList: '简历列表',
     preview: '预览',
+    parsedContent: '解析内容',
+    parsedContentHint: '以下是 PDF/文档解析后 AI 实际看到的文本内容',
+    loadingContent: '正在加载解析内容...',
+    noContent: '暂无解析内容，请重新拖入简历',
+    contentLength: '共 {count} 个字符',
     startAnalysis: '开始分析',
     reAnalyzeAll: '全部重新分析',
     exportReport: '导出报告',

@@ -28,6 +28,11 @@ export default {
   home: {
     resumeList: 'Resume List',
     preview: 'Preview',
+    parsedContent: 'Parsed Content',
+    parsedContentHint: 'Text content that AI actually sees after parsing the PDF/document',
+    loadingContent: 'Loading parsed content...',
+    noContent: 'No parsed content, please re-import the resume',
+    contentLength: '{count} characters',
     startAnalysis: 'Start Analysis',
     reAnalyzeAll: 'Re-analyze All',
     exportReport: 'Export Report',

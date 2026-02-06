@@ -28,6 +28,11 @@ export default {
   home: {
     resumeList: '履歷列表',
     preview: '預覽',
+    parsedContent: '解析內容',
+    parsedContentHint: '以下是 PDF/文件解析後 AI 實際看到的文字內容',
+    loadingContent: '正在載入解析內容...',
+    noContent: '暫無解析內容，請重新拖入履歷',
+    contentLength: '共 {count} 個字元',
     startAnalysis: '開始分析',
     reAnalyzeAll: '全部重新分析',
     exportReport: '匯出報告',

@@ -623,6 +623,26 @@ export const useResumeStore = defineStore('resume', () => {
     console.log('✅ Wails 事件监听已初始化')
   }
 
+  // 获取简历解析内容（AI 实际看到的文本）
+  async function getResumeContent(id: string): Promise<string> {
+    if (isWailsEnv && WailsApp) {
+      try {
+        const content = await WailsApp.GetFreshResumeContent(id)
+        // GetFreshResumeContent 返回 [string, error]，处理两种情况
+        if (Array.isArray(content)) {
+          return content[0] || ''
+        }
+        return content || ''
+      } catch (err: any) {
+        devLog('error', `获取简历内容失败: ${err.message || err}`)
+        return ''
+      }
+    }
+    // 回退到前端已有内容
+    const resume = resumes.value.find(r => r.id === id)
+    return resume?.content || '(非 Wails 环境，无法获取解析内容)'
+  }
+
   // 检查是否为 Wails 环境
   function isWailsEnvironment() {
     return isWailsEnv
@@ -647,6 +667,7 @@ export const useResumeStore = defineStore('resume', () => {
     reAnalyzeAll,
     startAnalysis,
     clearAll,
+    getResumeContent,
     initWailsEvents,
     isWailsEnvironment
   }

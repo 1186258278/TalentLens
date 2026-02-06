@@ -469,6 +469,34 @@ func (a *App) GetResumeText(id string) (string, error) {
 	return "", nil
 }
 
+// GetFreshResumeContent 重新从原始文件提取内容并返回（同时更新缓存）
+func (a *App) GetFreshResumeContent(id string) (string, error) {
+	path := filepath.Join(a.getDataDir(), "resumes", id+".json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("简历不存在")
+	}
+
+	var resume Resume
+	if err := json.Unmarshal(data, &resume); err != nil {
+		return "", fmt.Errorf("解析失败")
+	}
+
+	// 重新从原始文件提取
+	if resume.FilePath != "" && resume.FilePath != resume.FileName {
+		freshContent := a.extractText(resume.FilePath)
+		if freshContent != "" && len(freshContent) > 10 {
+			resume.Content = freshContent
+			a.saveResume(&resume) // 更新磁盘缓存
+			log.Printf("[GetFreshResumeContent] 重新提取成功: %s, 长度=%d", resume.FileName, len(freshContent))
+			return freshContent, nil
+		}
+	}
+
+	// 回退到已有内容
+	return resume.Content, nil
+}
+
 // ============================================
 // 招聘项目管理
 // ============================================

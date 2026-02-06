@@ -97,6 +97,10 @@
                 <el-icon><Document /></el-icon>
                 {{ $t('project.ranking') }}
               </button>
+              <button :class="['tab-btn', { active: rightTab === 'content' }]" @click="rightTab = 'content'">
+                <el-icon><Tickets /></el-icon>
+                {{ $t('home.parsedContent') }}
+              </button>
             </div>
             <div class="tab-actions" v-if="rightTab === 'ranking'">
               <button class="action-btn" @click="handleExport">
@@ -234,6 +238,28 @@
             <el-empty v-else :description="$t('home.selectToPreview')" />
           </div>
 
+          <!-- 解析内容 Tab -->
+          <div v-show="rightTab === 'content'" class="parsed-content-tab">
+            <div v-if="!resumeStore.selectedResume" class="content-empty">
+              <el-empty :description="$t('home.selectToPreview')" />
+            </div>
+            <div v-else-if="contentLoading" class="content-loading">
+              <el-icon class="spin"><Loading /></el-icon>
+              <span>{{ $t('home.loadingContent') }}</span>
+            </div>
+            <div v-else-if="!parsedContent" class="content-empty">
+              <el-empty :description="$t('home.noContent')" />
+            </div>
+            <div v-else class="content-viewer">
+              <div class="content-header">
+                <span class="content-filename">{{ resumeStore.selectedResume.fileName }}</span>
+                <span class="content-stats">{{ $t('home.contentLength', { count: parsedContent.length }) }}</span>
+              </div>
+              <div class="content-hint">{{ $t('home.parsedContentHint') }}</div>
+              <pre class="content-text">{{ parsedContent }}</pre>
+            </div>
+          </div>
+
           <!-- 排名 Tab -->
           <div v-show="rightTab === 'ranking'" class="ranking-content">
             <div v-if="rankedResumes.length > 0" class="ranking-list">
@@ -281,7 +307,7 @@ import { useI18n } from 'vue-i18n'
 import {
   Setting, Briefcase, Document, VideoPlay, Delete, View,
   CircleCheck, Warning, ChatLineSquare, Clock, Loading, CircleClose,
-  RefreshRight, Download
+  RefreshRight, Download, Tickets
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import TitleBar from '../components/TitleBar.vue'
@@ -302,7 +328,9 @@ const projectStore = useProjectStore()
 // 项目上下文
 const projectId = computed(() => (route.params.id as string) || '')
 const projectName = computed(() => projectStore.currentProject?.name || '')
-const rightTab = ref<'detail' | 'ranking'>('detail')
+const rightTab = ref<'detail' | 'ranking' | 'content'>('detail')
+const parsedContent = ref('')
+const contentLoading = ref(false)
 
 const jobTitle = ref('高级Go开发工程师')
 const showConfigGuide = ref(false)
@@ -405,6 +433,29 @@ function handleStartAnalysis() {
   if (!checkAIConfig()) { showConfigGuide.value = true; return }
   resumeStore.startAnalysis()
 }
+
+// 加载解析内容
+async function loadParsedContent() {
+  if (!resumeStore.selectedId) { parsedContent.value = ''; return }
+  contentLoading.value = true
+  try {
+    parsedContent.value = await resumeStore.getResumeContent(resumeStore.selectedId)
+  } catch {
+    parsedContent.value = ''
+  } finally {
+    contentLoading.value = false
+  }
+}
+
+// 切换到解析内容 Tab 时自动加载
+watch(rightTab, (tab) => {
+  if (tab === 'content' && resumeStore.selectedId) { loadParsedContent() }
+})
+
+// 选中简历变化时，如果在内容 Tab 则刷新
+watch(() => resumeStore.selectedId, () => {
+  if (rightTab.value === 'content') { loadParsedContent() }
+})
 
 async function handleReAnalyze(id: string) {
   if (!checkAIConfig()) { showConfigGuide.value = true; return }
@@ -936,6 +987,87 @@ onMounted(async () => {
 .tab-actions {
   display: flex;
   gap: 6px;
+}
+
+// 解析内容面板
+.parsed-content-tab {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: $bg-secondary;
+
+  .content-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: $text-tertiary;
+
+    .el-icon { font-size: 32px; margin-bottom: 10px; color: $system-blue; }
+    span { font-size: 13px; }
+  }
+
+  .content-empty {
+    padding: 40px 20px;
+  }
+
+  .content-viewer {
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: $bg-primary;
+      border: 1px solid $separator;
+      border-radius: $radius-lg $radius-lg 0 0;
+
+      .content-filename {
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-primary;
+      }
+
+      .content-stats {
+        font-size: 11px;
+        color: $text-tertiary;
+        padding: 2px 8px;
+        background: rgba(0,122,255,0.08);
+        border-radius: 4px;
+        color: $system-blue;
+      }
+    }
+
+    .content-hint {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: $text-tertiary;
+      background: rgba(255, 149, 0, 0.06);
+      border-left: 1px solid $separator;
+      border-right: 1px solid $separator;
+    }
+
+    .content-text {
+      margin: 0;
+      padding: 16px;
+      background: $bg-primary;
+      border: 1px solid $separator;
+      border-top: none;
+      border-radius: 0 0 $radius-lg $radius-lg;
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      color: $text-primary;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: calc(100vh - 260px);
+      overflow-y: auto;
+
+      &::-webkit-scrollbar { width: 6px; }
+      &::-webkit-scrollbar-track { background: transparent; }
+      &::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+    }
+  }
 }
 
 // 排名面板
