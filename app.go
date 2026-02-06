@@ -1484,57 +1484,92 @@ func (a *App) OpenURL(url string) {
 }
 
 // CheckForUpdate 检查 GitHub 是否有新版本
+// 优先用 releases/latest，失败则回退到 tags 列表
 func (a *App) CheckForUpdate() map[string]interface{} {
 	result := map[string]interface{}{
 		"hasUpdate":      false,
 		"currentVersion": AppVersion,
 		"latestVersion":  AppVersion,
-		"releaseURL":     "",
+		"releaseURL":     fmt.Sprintf("https://github.com/%s/releases", GitHubRepo),
 		"error":          "",
 	}
 
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", GitHubRepo)
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		result["error"] = fmt.Sprintf("创建请求失败: %v", err)
+	// 尝试两个 API：releases/latest 和 tags
+	urls := []string{
+		fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", GitHubRepo),
+		fmt.Sprintf("https://api.github.com/repos/%s/tags?per_page=1", GitHubRepo),
+	}
+
+	client := &http.Client{Timeout: 15 * time.Second}
+
+	for i, apiURL := range urls {
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "TalentLens/"+AppVersion)
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("[CheckForUpdate] API %d 网络错误: %v", i, err)
+			result["error"] = fmt.Sprintf("网络错误: %v", err)
+			continue
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		log.Printf("[CheckForUpdate] API %d 状态=%d, URL=%s", i, resp.StatusCode, apiURL)
+
+		if resp.StatusCode != 200 {
+			result["error"] = fmt.Sprintf("GitHub 返回 %d", resp.StatusCode)
+			continue
+		}
+
+		// 解析结果
+		var tagName string
+		var htmlURL string
+
+		if i == 0 {
+			// releases/latest 返回单个对象
+			var release struct {
+				TagName string `json:"tag_name"`
+				HTMLURL string `json:"html_url"`
+			}
+			if json.Unmarshal(body, &release) == nil && release.TagName != "" {
+				tagName = release.TagName
+				htmlURL = release.HTMLURL
+			}
+		} else {
+			// tags 返回数组
+			var tags []struct {
+				Name string `json:"name"`
+			}
+			if json.Unmarshal(body, &tags) == nil && len(tags) > 0 {
+				tagName = tags[0].Name
+				htmlURL = fmt.Sprintf("https://github.com/%s/releases/tag/%s", GitHubRepo, tagName)
+			}
+		}
+
+		if tagName == "" {
+			continue
+		}
+
+		latestVersion := strings.TrimPrefix(tagName, "v")
+		result["latestVersion"] = latestVersion
+		result["releaseURL"] = htmlURL
+		result["error"] = ""
+
+		if compareVersions(latestVersion, AppVersion) > 0 {
+			result["hasUpdate"] = true
+		}
+
+		log.Printf("[CheckForUpdate] 成功! 当前=%s, 最新=%s, 有更新=%v", AppVersion, latestVersion, result["hasUpdate"])
 		return result
 	}
-	req.Header.Set("User-Agent", "TalentLens/"+AppVersion)
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		result["error"] = fmt.Sprintf("网络错误: %v", err)
-		return result
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		result["error"] = fmt.Sprintf("GitHub API 返回 %d", resp.StatusCode)
-		return result
-	}
-
-	body, _ := io.ReadAll(resp.Body)
-	var release struct {
-		TagName string `json:"tag_name"`
-		HTMLURL string `json:"html_url"`
-		Name    string `json:"name"`
-	}
-	if err := json.Unmarshal(body, &release); err != nil {
-		result["error"] = "解析版本信息失败"
-		return result
-	}
-
-	latestVersion := strings.TrimPrefix(release.TagName, "v")
-	result["latestVersion"] = latestVersion
-	result["releaseURL"] = release.HTMLURL
-
-	if compareVersions(latestVersion, AppVersion) > 0 {
-		result["hasUpdate"] = true
-	}
-
-	log.Printf("[CheckForUpdate] 当前=%s, 最新=%s, 有更新=%v", AppVersion, latestVersion, result["hasUpdate"])
 	return result
 }
 
