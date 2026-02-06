@@ -161,7 +161,7 @@ jobs:
         run: npm ci
 
       - name: Build for Linux ${{ matrix.arch }}
-        run: wails build -platform linux/${{ matrix.arch }} -ldflags "-s -w"
+        run: wails build -platform linux/${{ matrix.arch }} -tags webkit2_41 -ldflags "-s -w"
 
       - name: Package
         run: |
