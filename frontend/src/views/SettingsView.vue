@@ -197,67 +197,68 @@
         </section>
 
         <!-- 关于 -->
-        <section v-show="activeTab === 'about'" class="content-section">
-          <div class="section-head">
-            <h2>{{ $t('about.title') }}</h2>
-          </div>
-
-          <!-- 版本信息 -->
-          <div class="form-card about-card">
-            <div class="about-logo">
-              <span class="logo-text">TalentLens</span>
-              <span class="version-tag">v{{ appVersion || '1.1.0' }}</span>
+        <section v-show="activeTab === 'about'" class="content-section about-section">
+          <div class="about-center">
+            <!-- Logo 区域 -->
+            <div class="about-hero">
+              <div class="about-icon">
+                <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+                  <rect width="48" height="48" rx="12" fill="url(#aboutGrad)"/>
+                  <path d="M14 16h20M14 24h14M14 32h18" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="36" cy="32" r="6" fill="#fff" fill-opacity="0.3"/>
+                  <path d="M34 32l2 2 3-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <defs><linearGradient id="aboutGrad" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#007AFF"/><stop offset="1" stop-color="#5856D6"/></linearGradient></defs>
+                </svg>
+              </div>
+              <h1 class="about-title">TalentLens</h1>
+              <span class="about-version">v{{ appVersion || '1.1.0' }}</span>
+              <p class="about-subtitle">AI-Powered Resume Screening Tool</p>
             </div>
-            <p class="about-desc">AI-Powered Resume Screening Tool</p>
 
-            <div class="update-section">
-              <el-button @click="checkForUpdate" :loading="updateChecking" round>
-                {{ updateChecking ? $t('about.checking') : $t('about.checkUpdate') }}
-              </el-button>
-
-              <div v-if="updateResult" class="update-result">
+            <!-- 更新检测 -->
+            <div class="about-update-card">
+              <div class="update-row">
+                <div class="update-info">
+                  <span class="update-label">{{ $t('about.version') }}</span>
+                  <span class="update-value">v{{ appVersion || '1.1.0' }}</span>
+                </div>
+                <el-button @click="checkForUpdate" :loading="updateChecking" size="small" round>
+                  {{ updateChecking ? $t('about.checking') : $t('about.checkUpdate') }}
+                </el-button>
+              </div>
+              <div v-if="updateResult" class="update-result-row">
                 <div v-if="updateResult.hasUpdate" class="update-available">
-                  <span class="update-badge">{{ $t('about.newVersion', { version: updateResult.latestVersion }) }}</span>
+                  <span class="new-badge">NEW</span>
+                  <span class="new-text">{{ $t('about.newVersion', { version: updateResult.latestVersion }) }}</span>
                   <el-button type="primary" size="small" round @click="openLink(updateResult.releaseURL)">
                     {{ $t('about.download') }}
                   </el-button>
                 </div>
-                <div v-else-if="!updateResult.error" class="update-latest">
-                  {{ $t('about.noUpdate') }}
-                </div>
+                <span v-else-if="!updateResult.error" class="up-to-date">{{ $t('about.noUpdate') }}</span>
               </div>
             </div>
-          </div>
 
-          <!-- 链接 -->
-          <div class="form-card">
-            <div class="section-head" style="padding:0;margin-bottom:12px;">
-              <h3 style="font-size:14px;">{{ $t('about.links') }}</h3>
+            <!-- 链接 -->
+            <div class="about-links-card">
+              <h3 class="links-title">{{ $t('about.links') }}</h3>
+              <div class="links-grid">
+                <button class="link-card" @click="openLink('https://github.com/1186258278/TalentLens')">
+                  <svg class="link-svg" viewBox="0 0 16 16" fill="currentColor" width="20" height="20"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                  <span>{{ $t('about.github') }}</span>
+                </button>
+                <button class="link-card" @click="openLink('https://talentlens.qt.cool')">
+                  <span class="link-emoji">🌐</span>
+                  <span>{{ $t('about.website') }}</span>
+                </button>
+                <button class="link-card" @click="openLink('https://qingchencloud.com')">
+                  <span class="link-emoji">🏢</span>
+                  <span>{{ $t('about.company') }}</span>
+                </button>
+              </div>
             </div>
-            <div class="link-list">
-              <button class="link-item" @click="openLink('https://github.com/1186258278/TalentLens')">
-                <span class="link-icon">
-                  <svg viewBox="0 0 16 16" fill="currentColor" width="16" height="16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-                </span>
-                <span class="link-text">{{ $t('about.github') }}</span>
-                <el-icon class="link-arrow"><Link /></el-icon>
-              </button>
-              <button class="link-item" @click="openLink('https://talentlens.qt.cool')">
-                <span class="link-icon">🌐</span>
-                <span class="link-text">{{ $t('about.website') }}</span>
-                <el-icon class="link-arrow"><Link /></el-icon>
-              </button>
-              <button class="link-item" @click="openLink('https://qingchencloud.com')">
-                <span class="link-icon">🏢</span>
-                <span class="link-text">{{ $t('about.company') }}</span>
-                <el-icon class="link-arrow"><Link /></el-icon>
-              </button>
-            </div>
-          </div>
 
-          <!-- 版权 -->
-          <div class="copyright-text">
-            Copyright &copy; 2025 {{ $t('about.copyright') }}
+            <!-- 版权 -->
+            <p class="about-copyright">Copyright &copy; 2025 {{ $t('about.copyright') }}</p>
           </div>
         </section>
       </main>
@@ -786,115 +787,173 @@ onMounted(async () => {
 }
 
 // 关于页面
-.about-card {
+.about-section {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.about-center {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+.about-hero {
   text-align: center;
-  padding: 32px 20px !important;
+  margin-bottom: 24px;
 
-  .about-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 8px;
-
-    .logo-text {
-      font-size: 22px;
-      font-weight: 700;
-      color: $text-primary;
-      letter-spacing: -0.5px;
-    }
-
-    .version-tag {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 2px 10px;
-      border-radius: 12px;
-      background: $system-blue-light;
-      color: $system-blue;
-    }
+  .about-icon {
+    margin-bottom: 14px;
+    svg { filter: drop-shadow(0 4px 12px rgba(0, 122, 255, 0.25)); }
   }
 
-  .about-desc {
+  .about-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .about-version {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 12px;
+    background: $system-blue-light;
+    color: $system-blue;
+    margin-bottom: 8px;
+  }
+
+  .about-subtitle {
     font-size: 13px;
     color: $text-tertiary;
-    margin: 0 0 20px 0;
-  }
-
-  .update-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-
-    .update-result {
-      .update-available {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        .update-badge {
-          font-size: 13px;
-          font-weight: 600;
-          color: $system-green;
-          padding: 4px 14px;
-          background: rgba(52, 199, 89, 0.1);
-          border-radius: 16px;
-        }
-      }
-
-      .update-latest {
-        font-size: 13px;
-        color: $text-secondary;
-      }
-    }
+    margin: 8px 0 0 0;
   }
 }
 
-.link-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.about-update-card {
+  background: $bg-primary;
+  border: 1px solid $separator;
+  border-radius: $radius-lg;
+  padding: 16px 20px;
+  margin-bottom: 16px;
 
-  .link-item {
+  .update-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border: none;
-    border-radius: $radius-md;
-    background: transparent;
-    cursor: pointer;
-    font-family: $font-family;
-    font-size: 13px;
-    color: $text-primary;
-    transition: background $transition-fast;
-    width: 100%;
-    text-align: left;
+    justify-content: space-between;
+  }
 
-    &:hover { background: $bg-hover; }
+  .update-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-    .link-icon {
-      width: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .update-label {
+      font-size: 13px;
       color: $text-secondary;
     }
+    .update-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+  }
 
-    .link-text { flex: 1; }
+  .update-result-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid $separator;
 
-    .link-arrow {
-      font-size: 12px;
+    .update-available {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .new-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: $system-green;
+        color: white;
+        letter-spacing: 0.5px;
+      }
+      .new-text {
+        flex: 1;
+        font-size: 13px;
+        font-weight: 500;
+        color: $system-green;
+      }
+    }
+
+    .up-to-date {
+      font-size: 13px;
       color: $text-tertiary;
     }
   }
 }
 
-.copyright-text {
+.about-links-card {
+  background: $bg-primary;
+  border: 1px solid $separator;
+  border-radius: $radius-lg;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+
+  .links-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-secondary;
+    margin: 0 0 12px 0;
+  }
+
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+
+    .link-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 10px;
+      border: 1px solid $separator;
+      border-radius: $radius-md;
+      background: $bg-secondary;
+      cursor: pointer;
+      font-family: $font-family;
+      font-size: 12px;
+      font-weight: 500;
+      color: $text-primary;
+      transition: all $transition-fast;
+
+      .link-svg { color: $text-secondary; }
+      .link-emoji { font-size: 20px; }
+
+      &:hover {
+        border-color: $system-blue;
+        background: $system-blue-light;
+        color: $system-blue;
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+
+        .link-svg { color: $system-blue; }
+      }
+    }
+  }
+}
+
+.about-copyright {
   text-align: center;
   font-size: 11px;
   color: $text-tertiary;
-  margin-top: 24px;
-  padding: 12px;
+  margin: 0;
+  padding: 8px 0;
 }
 </style>

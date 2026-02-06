@@ -1493,9 +1493,17 @@ func (a *App) CheckForUpdate() map[string]interface{} {
 		"error":          "",
 	}
 
-	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", GitHubRepo)
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", GitHubRepo)
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		result["error"] = fmt.Sprintf("创建请求失败: %v", err)
+		return result
+	}
+	req.Header.Set("User-Agent", "TalentLens/"+AppVersion)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		result["error"] = fmt.Sprintf("网络错误: %v", err)
 		return result
